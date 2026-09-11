@@ -95,22 +95,15 @@ svg {
 }
 .brand {
   display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  padding: 0 14px;
-  border-left: 4px solid #dc273c;
+  align-items: center;
+  padding: 0;
   margin: 0 10px;
 }
-.brand strong {
-  font-size: 27px;
-  letter-spacing: 4px;
-  color: #183e78;
-}
-.brand span {
-  font-size: 10px;
-  letter-spacing: 2px;
-  font-weight: 700;
-  color: #5a7093;
+.brand img {
+  display: block;
+  width: 190px;
+  height: auto;
+  object-fit: contain;
 }
 .brand-sub {
   font-size: 12px;
@@ -570,11 +563,9 @@ footer {
 }
 .brand-row .brand {
   margin-left: 5px;
-  padding-left: 10px;
 }
-.brand-row .brand strong {
-  font-size: 25px;
-  letter-spacing: 3px;
+.brand-row .brand img {
+  width: 174px;
 }
 .collapse-toggle {
   color: #7b8798;
@@ -1356,14 +1347,14 @@ td.wide-cell {
 }
 .login-intro .brand {
   margin: 0;
-  border-color: #fd626d;
+  width: max-content;
+  padding: 10px 14px;
+  border-radius: 12px;
+  background: #fff;
+  box-shadow: 0 10px 28px #0a244f2e;
 }
-.login-intro .brand strong {
-  color: white;
-  font-size: 35px;
-}
-.login-intro .brand span {
-  color: #adc9ee;
+.login-intro .brand img {
+  width: 245px;
 }
 .login-eyebrow {
   font-size: 17px;
@@ -1418,6 +1409,9 @@ td.wide-cell {
 .login-card > .brand {
   width: max-content;
   margin: 0 auto 25px;
+}
+.login-card > .brand img {
+  width: 225px;
 }
 .login-card h2 {
   text-align: center;
@@ -1538,10 +1532,10 @@ td.wide-cell {
     padding: 45px 7%;
   }
   .brand-row .brand {
-    padding-left: 7px;
+    margin-left: 0;
   }
-  .brand-row .brand strong {
-    font-size: 22px;
+  .brand-row .brand img {
+    width: 158px;
   }
 }
 @media (max-width: 760px) {
@@ -1659,8 +1653,8 @@ td.wide-cell {
     line-height: 1.5;
     margin-top: 8px;
   }
-  .login-intro .brand strong {
-    font-size: 25px;
+  .login-intro .brand img {
+    width: 205px;
   }
   .login-intro p {
     margin-top: 14px;

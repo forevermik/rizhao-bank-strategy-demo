@@ -5,8 +5,12 @@ import { accounts, Account, cutoff } from '@/lib/data';
 export function Brand() {
   return (
     <div className="brand">
-      <strong>日照银行</strong>
-      <span>BANK OF RIZHAO</span>
+      <img
+        src="/rizhao-bank-logo.png"
+        alt="日照银行 BANK OF RIZHAO"
+        width="277"
+        height="77"
+      />
     </div>
   );
 }
