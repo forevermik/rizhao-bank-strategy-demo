@@ -1,0 +1,154 @@
+import { useMemo, useState } from 'react';
+import { Link, useSearchParams } from 'react-router-dom';
+import { LayoutGrid, List, Search } from 'lucide-react';
+import { EmptyState } from '../components/common/EmptyState';
+import { TaskCard } from '../components/task/TaskCard';
+import { useCompletionReports } from '../hooks/useCompletionReports';
+import { useTaskReporting } from '../hooks/useTaskReporting';
+import type { StrategicTask, Year } from '../types';
+import { years } from '../utils/taskCalculations';
+import {
+  calculateStandardYearProgress,
+  calculateTaskReportingStatus,
+  getTaskProgressSummary,
+  hasPlanningConfiguration,
+  isTaskCompletedByStandards,
+  isTaskOverdueByStandards,
+} from '../utils/progressCalculations';
+
+type StrategyTaskTab = 'all' | 'planning-configured' | 'planning-missing' | 'reported' | 'unreported' | 'overdue' | 'completed';
+
+export function TaskListPage() {
+  const [searchParams] = useSearchParams();
+  const { tasks } = useTaskReporting();
+  const { reports } = useCompletionReports();
+  const [query, setQuery] = useState('');
+  const [tab, setTab] = useState<StrategyTaskTab>('all');
+  const [area, setArea] = useState('全部板块');
+  const [dept, setDept] = useState(searchParams.get('lead') ?? '全部部门');
+  const [year, setYear] = useState<Year>(2026);
+  const [priority, setPriority] = useState('全部优先级');
+  const [view, setView] = useState<'card' | 'table'>('card');
+  const areas = ['全部板块', ...Array.from(new Set(tasks.map((task) => task.businessArea)))];
+  const departments = [
+    { id: '全部部门', name: '全部部门' },
+    ...Array.from(new Map(tasks.map((task) => [task.leadDepartmentId, { id: task.leadDepartmentId, name: task.leadDepartmentName }])).values()),
+  ];
+  const counts = {
+    all: tasks.length,
+    planningConfigured: tasks.filter(hasPlanningConfiguration).length,
+    planningMissing: tasks.filter((task) => !hasPlanningConfiguration(task)).length,
+    reported: tasks.filter((task) => getTaskProgressSummary(task, reports, year).actualProgress != null).length,
+    unreported: tasks.filter((task) => getTaskProgressSummary(task, reports, year).actualProgress == null).length,
+    overdue: tasks.filter((task) => isTaskOverdueByStandards(task, reports)).length,
+    completed: tasks.filter((task) => isTaskCompletedByStandards(task, reports)).length,
+  };
+  const filtered = useMemo(() => {
+    const normalized = query.trim().toLowerCase();
+    return tasks.filter((task) => {
+      const textOk = !normalized || `${task.code}${task.title}${task.leadDepartmentName}${task.supportingDepartmentNames.join('')}`.toLowerCase().includes(normalized);
+      const areaOk = area === '全部板块' || task.businessArea === area;
+      const deptOk = dept === '全部部门' || task.leadDepartmentId === dept;
+      const priorityOk = priority === '全部优先级' || task.priority === priority;
+      const statusOk =
+        tab === 'all'
+        || (tab === 'reported' && getTaskProgressSummary(task, reports, year).displayProgress != null)
+        || (tab === 'unreported' && getTaskProgressSummary(task, reports, year).actualProgress == null)
+        || (tab === 'planning-configured' && hasPlanningConfiguration(task))
+        || (tab === 'planning-missing' && !hasPlanningConfiguration(task))
+        || (tab === 'overdue' && isTaskOverdueByStandards(task, reports))
+        || (tab === 'completed' && isTaskCompletedByStandards(task, reports));
+      return textOk && areaOk && deptOk && priorityOk && statusOk;
+    });
+  }, [area, dept, priority, query, reports, tab, tasks, year]);
+
+  return (
+    <div className="space-y-5">
+      <div className="soft-panel rounded-ui p-5">
+        <div className="mb-2 text-xs font-black text-muted">目标配置情况</div>
+        <div className="mb-4 flex flex-wrap gap-2">
+          {[
+            ['all', `全部任务 ${counts.all}`],
+            ['planning-configured', `已配置规划目标 ${counts.planningConfigured}`],
+            ['planning-missing', `缺少规划目标 ${counts.planningMissing}`],
+          ].map(([key, label]) => (
+            <button key={key} onClick={() => setTab(key as StrategyTaskTab)} className={`h-10 rounded-xl px-4 text-sm font-bold ${tab === key ? 'bg-brand-500 text-white' : 'bg-[#F6F9FE] text-muted hover:text-brand-500'}`}>
+              {label}
+            </button>
+          ))}
+        </div>
+        <div className="mb-2 text-xs font-black text-muted">进度状态</div>
+        <div className="mb-4 flex flex-wrap gap-2">
+          {[
+            ['reported', `已有进度 ${counts.reported}`],
+            ['unreported', `进度待更新 ${counts.unreported}`],
+            ['overdue', `逾期 ${counts.overdue}`],
+            ['completed', `已达成 ${counts.completed}`],
+          ].map(([key, label]) => (
+            <button key={key} onClick={() => setTab(key as StrategyTaskTab)} className={`h-10 rounded-xl px-4 text-sm font-bold ${tab === key ? 'bg-brand-500 text-white' : 'bg-[#F6F9FE] text-muted hover:text-brand-500'}`}>
+              {label}
+            </button>
+          ))}
+        </div>
+        <div className="grid grid-cols-[1fr_160px_170px_130px_130px_auto] gap-3">
+          <div className="flex h-11 flex-1 items-center gap-3 rounded-ui border border-[#D9E3F2] bg-white px-4">
+            <Search className="text-muted" size={18} />
+            <input className="flex-1 outline-none" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="搜索编号、任务名称、部门" />
+          </div>
+          <select className="h-11 rounded-ui border border-[#D9E3F2] bg-white px-3" value={area} onChange={(event) => setArea(event.target.value)}>{areas.map((item) => <option key={item}>{item}</option>)}</select>
+          <select className="h-11 rounded-ui border border-[#D9E3F2] bg-white px-3" value={dept} onChange={(event) => setDept(event.target.value)}>{departments.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}</select>
+          <select className="h-11 rounded-ui border border-[#D9E3F2] bg-white px-3" value={year} onChange={(event) => setYear(Number(event.target.value) as Year)}>{years.map((item) => <option key={item}>{item}</option>)}</select>
+          <select className="h-11 rounded-ui border border-[#D9E3F2] bg-white px-3" value={priority} onChange={(event) => setPriority(event.target.value)}>{['全部优先级', '高', '中', '低', ''].map((item) => <option key={item} value={item}>{item || '—'}</option>)}</select>
+          <div className="flex rounded-ui border border-[#D9E3F2] bg-white p-1">
+            <button className={`grid h-9 w-9 place-items-center rounded-xl ${view === 'card' ? 'bg-brand-500 text-white' : 'text-muted'}`} onClick={() => setView('card')} aria-label="卡片视图"><LayoutGrid size={18} /></button>
+            <button className={`grid h-9 w-9 place-items-center rounded-xl ${view === 'table' ? 'bg-brand-500 text-white' : 'text-muted'}`} onClick={() => setView('table')} aria-label="表格视图"><List size={18} /></button>
+          </div>
+        </div>
+      </div>
+
+      <div className="flex items-center justify-between">
+        <h2 className="text-xl font-black text-ink">战略任务列表 <span className="text-brand-500">({filtered.length})</span></h2>
+        <div className="rounded-full bg-brand-50 px-3 py-1.5 text-sm font-bold text-brand-500">Excel 任务卡总数：{tasks.length} 张</div>
+      </div>
+
+      {view === 'card' ? (
+        filtered.length ? <div className="grid grid-cols-3 gap-3">{filtered.map((task) => <TaskCard key={task.id} task={task} relation="none" year={year} />)}</div> : <EmptyState />
+      ) : (
+        <StrategyTaskTable tasks={filtered} reports={reports} year={year} />
+      )}
+    </div>
+  );
+}
+
+function StrategyTaskTable({ tasks, reports, year }: { tasks: StrategicTask[]; reports: ReturnType<typeof useCompletionReports>['reports']; year: Year }) {
+  return (
+    <div className="soft-panel overflow-hidden rounded-ui">
+      <table className="w-full border-collapse text-left text-sm">
+        <thead className="bg-[#F6F9FE] text-muted">
+          <tr>
+            {['编号', '任务名称', '业务板块', '牵头部门', '优先级', '总体进度', `${year}年度进度`, '状态', '操作'].map((head) => <th key={head} className="px-4 py-3 font-bold">{head}</th>)}
+          </tr>
+        </thead>
+        <tbody>
+          {tasks.map((task) => {
+            const summary = getTaskProgressSummary(task, reports, year);
+            const yearProgress = calculateStandardYearProgress(task, year, reports);
+            return (
+              <tr key={task.id} className="border-t border-[#E4EBF5] hover:bg-brand-50/50">
+                <td className="px-4 py-4 font-extrabold text-brand-500">{task.code}</td>
+                <td className="px-4 py-4"><Link className="font-bold text-ink hover:text-brand-500" to={`/tasks/${task.id}`}>{task.title}</Link></td>
+                <td className="px-4 py-4 text-muted">{task.businessArea}</td>
+                <td className="px-4 py-4 text-muted">{task.leadDepartmentName}</td>
+                <td className="px-4 py-4">{task.priority || '—'}</td>
+                <td className="px-4 py-4 font-bold text-brand-500">{summary.displayProgress == null ? '待业务填报' : `${summary.displayProgress}%`}</td>
+                <td className="px-4 py-4">{yearProgress == null ? '—' : `${yearProgress}%`}</td>
+                <td className="px-4 py-4">{calculateTaskReportingStatus(task, task.leadDepartmentId, reports, year)}</td>
+                <td className="px-4 py-4"><Link className="font-bold text-brand-500" to={`/tasks/${task.id}?year=${year}`}>查看填报</Link></td>
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
+    </div>
+  );
+}
