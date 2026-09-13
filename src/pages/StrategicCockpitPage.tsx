@@ -1,3 +1,4 @@
+import { getTaskLeads } from '../utils/taskSelectors';
 import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import {
@@ -48,11 +49,11 @@ export function StrategicCockpitPage() {
     value: filtered.filter((task) => task.businessArea === name).length,
   }));
 
-  const leadDepartments = Array.from(new Set(filtered.map((task) => task.leadDepartmentId))).map((departmentId) => {
-    const ownedTasks = filtered.filter((task) => task.leadDepartmentId === departmentId);
+  const leadDepartments = Array.from(new Map(filtered.flatMap(getTaskLeads).map((lead) => [lead.id, lead])).values()).map(({id: departmentId, name}) => {
+    const ownedTasks = filtered.filter((task) => getTaskLeads(task).some((lead) => lead.id === departmentId));
     return {
       id: departmentId,
-      name: ownedTasks[0]?.leadDepartmentName ?? departmentId,
+      name,
       count: ownedTasks.length,
       overdueCount: ownedTasks.filter((task) => isTaskOverdueByStandards(task, reports)).length,
     };

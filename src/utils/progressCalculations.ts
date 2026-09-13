@@ -13,7 +13,7 @@ import { DEMO_DATA_AS_OF_DATE } from '../data/constants';
 import { years } from './taskCalculations';
 
 export const progressExplanation =
-  '页面进度为静态Demo演示数据，不代表实际经营完成情况。Excel年度目标仅作为目标展示，不作为实际完成值。';
+  '任务和完成标准来自日照银行2026—2030战略发展规划任务分解表。原表未提供完成进度，当前留空待填报；规划目标和实施时间不作为实际完成值。';
 
 const explanationMap: Record<TaskProgressSummary['progressSource'], string> = {
   'annual-target-path': progressExplanation,
@@ -83,6 +83,7 @@ export function calculatePlannedFinalGap(standard: CompletionStandardItem, year:
 export function getPlannedTarget(standard: CompletionStandardItem, year: Year) {
   const direct = standard.yearlyTargets[year];
   if (direct != null) return direct;
+  if (standard.source) return null;
   const indicator = findIndicatorForStandard(standard);
   return indicator?.yearlyValues.find((value) => value.year === year)?.target ?? null;
 }

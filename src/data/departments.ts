@@ -1,3 +1,4 @@
+// Imported from 日照银行2026-2030战略发展规划任务分解表_0810T008.xlsx; source text preserved.
 import type { Department } from '../types';
 
 export const departments: Department[] = [
@@ -224,5 +225,220 @@ export const departments: Department[] = [
       "总行各部室",
       "总行各相关部门"
     ]
+  },
+  {
+    "id": "rz-dept-411b08560a",
+    "name": "小企业金融部",
+    "aliases": []
+  },
+  {
+    "id": "rz-dept-28197ff3f1",
+    "name": "小企业信贷中心",
+    "aliases": []
+  },
+  {
+    "id": "rz-dept-3c14f17449",
+    "name": "交易银行部",
+    "aliases": []
+  },
+  {
+    "id": "rz-dept-88470fef13",
+    "name": "投资银行与资产管理部",
+    "aliases": []
+  },
+  {
+    "id": "rz-dept-8fde921518",
+    "name": "零售金融部",
+    "aliases": []
+  },
+  {
+    "id": "rz-dept-fc565add28",
+    "name": "科技部",
+    "aliases": []
+  },
+  {
+    "id": "rz-dept-64ddb15700",
+    "name": "数字银行部",
+    "aliases": []
+  },
+  {
+    "id": "rz-dept-ae0d6e212a",
+    "name": "授信审批部",
+    "aliases": []
+  },
+  {
+    "id": "rz-dept-93f1bc233c",
+    "name": "零售信贷中心",
+    "aliases": []
+  },
+  {
+    "id": "rz-dept-8b959faf8a",
+    "name": "风险管理部",
+    "aliases": []
+  },
+  {
+    "id": "rz-dept-71d974e8f1",
+    "name": "投行与资产管理部",
+    "aliases": []
+  },
+  {
+    "id": "rz-dept-544f9aac2a",
+    "name": "公司业务部、小企业金融部、金融市场部、供应链金融中心、授信审批部、各分支机构",
+    "aliases": []
+  },
+  {
+    "id": "rz-dept-a59f9e3b1e",
+    "name": "科技部、数字银行部、人力资源部、各分支机构",
+    "aliases": []
+  },
+  {
+    "id": "rz-dept-31b38847dd",
+    "name": "信息科技部",
+    "aliases": []
+  },
+  {
+    "id": "rz-dept-2ac3877548",
+    "name": "场景金融运营中心",
+    "aliases": []
+  },
+  {
+    "id": "rz-dept-6606be1a79",
+    "name": "网络金融部",
+    "aliases": []
+  },
+  {
+    "id": "rz-dept-c2db798173",
+    "name": "小企业",
+    "aliases": []
+  },
+  {
+    "id": "rz-dept-8565565a39",
+    "name": "供应链",
+    "aliases": []
+  },
+  {
+    "id": "rz-dept-db452550f0",
+    "name": "零售信贷中心等业务部门",
+    "aliases": []
+  },
+  {
+    "id": "rz-dept-f3300dd6a1",
+    "name": "营运管理部",
+    "aliases": []
+  },
+  {
+    "id": "rz-dept-e2468f017d",
+    "name": "其它业务部门",
+    "aliases": []
+  },
+  {
+    "id": "rz-dept-5c32d25cda",
+    "name": "总行相关业务部室",
+    "aliases": []
+  },
+  {
+    "id": "rz-dept-23c16e45e9",
+    "name": "乡村振兴部",
+    "aliases": []
+  },
+  {
+    "id": "rz-dept-5ddc870073",
+    "name": "党群/办公室",
+    "aliases": []
+  },
+  {
+    "id": "rz-dept-dda516218c",
+    "name": "公司业务综合金融服务会商机制（宋宜涛）",
+    "aliases": []
+  },
+  {
+    "id": "rz-dept-b7fce6d170",
+    "name": "公司业务部、零售金融部、投资银行与资产管理部、小企业金融部、小企业信贷中心、供应链金融中心、票据中心、交易银行部、数字银行部、科技部、网络金融部、各分支行",
+    "aliases": []
+  },
+  {
+    "id": "rz-dept-4b1e3c1ee3",
+    "name": "公司业务部、交易银行部、投资银行与资产管理部、供应链金融中心、小企业金融部、小企业信贷中心、票据中心、数字银行部、各分支行",
+    "aliases": []
+  },
+  {
+    "id": "rz-dept-7d0fdaeb2a",
+    "name": "零售条线会议",
+    "aliases": []
+  },
+  {
+    "id": "rz-dept-8b39c0d45f",
+    "name": "零售金融部、场景金融运营中心、零售信贷中心、网络金融部、数字银行部、各分支行",
+    "aliases": []
+  },
+  {
+    "id": "rz-dept-f8a1ace4e1",
+    "name": "风控模型月度例会机制（王惠斌）",
+    "aliases": []
+  },
+  {
+    "id": "rz-dept-b903bba900",
+    "name": "风险管理部、授信审批部、法律合规部、资产保全部、数字银行部、公司金融部、零售金融部、小企业金融部、各分支行",
+    "aliases": []
+  },
+  {
+    "id": "rz-dept-36ec8d8a9d",
+    "name": "行四大中心协同工作委员会",
+    "aliases": []
+  },
+  {
+    "id": "rz-dept-b9f8ff5ac3",
+    "name": "小企业信贷中心、供应链金融中心、票据中心、场景金融运营中心",
+    "aliases": []
+  },
+  {
+    "id": "rz-dept-720e6e5580",
+    "name": "“三化塑形”项目领导小组",
+    "aliases": []
+  },
+  {
+    "id": "rz-dept-39cf078831",
+    "name": "营运管理部、公司金融部、零售金融部、人力资源部、数字银行部、各分支行",
+    "aliases": []
+  },
+  {
+    "id": "rz-dept-fe93033846",
+    "name": "袁玲玲",
+    "aliases": []
+  },
+  {
+    "id": "rz-dept-55615b45ed",
+    "name": "营运管理部、网络金融部、科技部、数字银行部、各分支行",
+    "aliases": []
+  },
+  {
+    "id": "rz-dept-fb3ca7f24e",
+    "name": "计财营运条线会议",
+    "aliases": []
+  },
+  {
+    "id": "rz-dept-2a6e38e564",
+    "name": "计划财务部、科技部、数字银行部",
+    "aliases": []
+  },
+  {
+    "id": "rz-dept-000a067a01",
+    "name": "内部控制与风险管理会议机制（张弘）",
+    "aliases": []
+  },
+  {
+    "id": "rz-dept-29dc5dc0e5",
+    "name": "授信审批部、风险管理部、审计部、法律合规部、各分支行",
+    "aliases": []
+  },
+  {
+    "id": "rz-dept-65dc797eac",
+    "name": "法律合规部、风险管理部、消费者权益保护中心",
+    "aliases": []
+  },
+  {
+    "id": "rz-dept-f97031f54f",
+    "name": "科技信息部",
+    "aliases": []
   }
 ];

@@ -1,8 +1,12 @@
 import type { SessionUser, StrategicTask } from '../types';
 
+export function getTaskLeads(task: StrategicTask) {
+  return (task.leadDepartmentIds ?? [task.leadDepartmentId]).map((id, index) => ({ id, name: task.leadDepartmentNames?.[index] ?? task.leadDepartmentName }));
+}
+
 export function getTaskRelation(task: StrategicTask, departmentId?: string) {
   if (!departmentId) return 'none';
-  if (task.leadDepartmentId === departmentId) return 'lead';
+  if (getTaskLeads(task).some((lead) => lead.id === departmentId)) return 'lead';
   if (task.supportingDepartmentIds.includes(departmentId)) return 'support';
   return 'none';
 }
@@ -14,7 +18,7 @@ export function getVisibleTasks(tasks: StrategicTask[], user: SessionUser | null
 }
 
 export function getLeadTasks(tasks: StrategicTask[], departmentId?: string) {
-  return tasks.filter((task) => task.leadDepartmentId === departmentId);
+  return tasks.filter((task) => getTaskLeads(task).some((lead) => lead.id === departmentId));
 }
 
 export function getSupportTasks(tasks: StrategicTask[], departmentId?: string) {
@@ -37,11 +41,11 @@ export function validateTaskDepartmentRelations(tasks: StrategicTask[], departme
   const issues: string[] = [];
   for (const task of tasks) {
     if (!task.leadDepartmentId) issues.push(`${task.code}: missing leadDepartmentId`);
-    if (!departmentIds.has(task.leadDepartmentId)) issues.push(`${task.code}: leadDepartmentId not in department dictionary`);
+    if (getTaskLeads(task).some((lead) => !departmentIds.has(lead.id))) issues.push(`${task.code}: leadDepartmentId not in department dictionary`);
     for (const id of task.supportingDepartmentIds) {
       if (!departmentIds.has(id)) issues.push(`${task.code}: supportingDepartmentId ${id} not in department dictionary`);
     }
-    if (task.supportingDepartmentIds.includes(task.leadDepartmentId)) issues.push(`${task.code}: lead department duplicated in supporting departments`);
+    if (!task.source && task.supportingDepartmentIds.includes(task.leadDepartmentId)) issues.push(`${task.code}: lead department duplicated in supporting departments`);
     if (task.leadDepartmentId === task.businessArea) issues.push(`${task.code}: business area used as department id`);
   }
   if (import.meta.env.DEV && issues.length) {

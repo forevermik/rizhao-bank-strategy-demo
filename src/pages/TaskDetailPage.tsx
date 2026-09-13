@@ -62,7 +62,7 @@ export function TaskDetailPage() {
           <span className="rounded-lg bg-brand-50 px-3 py-1 text-sm font-black text-brand-500">{task.code}</span>
           {user?.role === 'department' && <span className={`rounded-lg px-3 py-1 text-sm font-black ${relation === 'lead' ? 'bg-brand-700 text-white' : 'border border-cyanx bg-white text-[#087D92]'}`}>{relation === 'lead' ? '我牵头' : '我协同'}</span>}
           <span className="rounded-lg bg-[#ECFEFF] px-3 py-1 text-sm font-bold text-[#087D92]">{task.businessArea || '—'}</span>
-          <span className="rounded-lg bg-[#FFF7ED] px-3 py-1 text-sm font-bold text-[#B54708]">优先级：{task.priority || '—'}</span>
+          <span className="rounded-lg bg-[#FFF7ED] px-3 py-1 text-sm font-bold text-[#B54708]">标签：{task.tag || '—'}</span>
         </div>
         <h2 className="mt-4 text-3xl font-black text-ink">{task.title}</h2>
         <p className="mt-4 text-base leading-8 text-[#344054]">{task.objective || '未录入任务目标'}</p>

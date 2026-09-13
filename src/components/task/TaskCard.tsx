@@ -27,18 +27,18 @@ export function TaskCard({ task, relation, year = 2026 }: { task: StrategicTask;
             {relationLabel && <TaskRelationBadge relation={relation!} />}
             <span className="rounded-lg bg-brand-50 px-2 py-0.5 text-xs font-extrabold text-brand-500">{task.code}</span>
             <span className="rounded-lg bg-[#ECFEFF] px-2 py-0.5 text-xs font-semibold text-[#087D92]">{task.businessArea || '—'}</span>
-            <span className="rounded-lg bg-[#FFF7ED] px-2 py-0.5 text-xs font-semibold text-[#B54708]">{task.priority || '—'}</span>
+            <span className="rounded-lg bg-[#FFF7ED] px-2 py-0.5 text-xs font-semibold text-[#B54708]">{task.tag || task.priority || '—'}</span>
           </div>
-          <Link to={`/tasks/${task.id}`} className="mt-2 block line-clamp-2 min-h-11 text-[15px] font-extrabold leading-[22px] text-ink hover:text-brand-500">
+          <Link title={task.title} to={`/tasks/${task.id}`} className="mt-2 block line-clamp-2 min-h-11 text-[15px] font-extrabold leading-[22px] text-ink hover:text-brand-500">
             {task.title}
           </Link>
-          <p className="mt-1 line-clamp-1 text-[11px] text-muted">{task.objective || '未录入任务目标'}</p>
+          <p title={task.objective} className="mt-1 line-clamp-2 text-[11px] text-muted">{task.objective || '未录入任务目标'}</p>
         </div>
       </div>
 
       <div className="mt-2.5 grid grid-cols-3 gap-1.5 text-xs">
         <MiniInfo label="牵头" value={task.leadDepartmentName || '—'} />
-        <MiniInfo label="协同" value={task.supportingDepartmentNames.length ? `${task.supportingDepartmentNames.length} 个` : '—'} />
+        <MiniInfo label="协同" value={task.supportingDepartmentNames.join('、') || '—'} />
         <MiniInfo label="实施时间" value={task.period || '—'} />
       </div>
 
@@ -99,7 +99,7 @@ function MiniInfo({ label, value }: { label: string; value: string }) {
   return (
     <div className="min-w-0 rounded-xl bg-[#F8FBFF] px-2 py-1">
       <div className="text-[10px] text-muted">{label}</div>
-      <div className="mt-0.5 min-w-0 truncate font-bold text-ink">{value}</div>
+      <div title={value} className="mt-0.5 min-w-0 line-clamp-2 break-words font-bold text-ink">{value}</div>
     </div>
   );
 }

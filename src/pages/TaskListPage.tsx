@@ -6,6 +6,7 @@ import { TaskCard } from '../components/task/TaskCard';
 import { useCompletionReports } from '../hooks/useCompletionReports';
 import { useTaskReporting } from '../hooks/useTaskReporting';
 import type { StrategicTask, Year } from '../types';
+import { getTaskLeads } from '../utils/taskSelectors';
 import { years } from '../utils/taskCalculations';
 import {
   calculateStandardYearProgress,
@@ -27,12 +28,12 @@ export function TaskListPage() {
   const [area, setArea] = useState('全部板块');
   const [dept, setDept] = useState(searchParams.get('lead') ?? '全部部门');
   const [year, setYear] = useState<Year>(2026);
-  const [priority, setPriority] = useState('全部优先级');
+  const [tag, setTag] = useState('全部标签');
   const [view, setView] = useState<'card' | 'table'>('card');
   const areas = ['全部板块', ...Array.from(new Set(tasks.map((task) => task.businessArea)))];
   const departments = [
     { id: '全部部门', name: '全部部门' },
-    ...Array.from(new Map(tasks.map((task) => [task.leadDepartmentId, { id: task.leadDepartmentId, name: task.leadDepartmentName }])).values()),
+    ...Array.from(new Map(tasks.flatMap(getTaskLeads).map((lead) => [lead.id, lead])).values()),
   ];
   const counts = {
     all: tasks.length,
@@ -48,8 +49,8 @@ export function TaskListPage() {
     return tasks.filter((task) => {
       const textOk = !normalized || `${task.code}${task.title}${task.leadDepartmentName}${task.supportingDepartmentNames.join('')}`.toLowerCase().includes(normalized);
       const areaOk = area === '全部板块' || task.businessArea === area;
-      const deptOk = dept === '全部部门' || task.leadDepartmentId === dept;
-      const priorityOk = priority === '全部优先级' || task.priority === priority;
+      const deptOk = dept === '全部部门' || getTaskLeads(task).some((lead) => lead.id === dept);
+      const tagOk = tag === '全部标签' || task.tag === tag;
       const statusOk =
         tab === 'all'
         || (tab === 'reported' && getTaskProgressSummary(task, reports, year).displayProgress != null)
@@ -58,9 +59,9 @@ export function TaskListPage() {
         || (tab === 'planning-missing' && !hasPlanningConfiguration(task))
         || (tab === 'overdue' && isTaskOverdueByStandards(task, reports))
         || (tab === 'completed' && isTaskCompletedByStandards(task, reports));
-      return textOk && areaOk && deptOk && priorityOk && statusOk;
+      return textOk && areaOk && deptOk && tagOk && statusOk;
     });
-  }, [area, dept, priority, query, reports, tab, tasks, year]);
+  }, [area, dept, tag, query, reports, tab, tasks, year]);
 
   return (
     <div className="space-y-5">
@@ -98,7 +99,7 @@ export function TaskListPage() {
           <select className="h-11 rounded-ui border border-[#D9E3F2] bg-white px-3" value={area} onChange={(event) => setArea(event.target.value)}>{areas.map((item) => <option key={item}>{item}</option>)}</select>
           <select className="h-11 rounded-ui border border-[#D9E3F2] bg-white px-3" value={dept} onChange={(event) => setDept(event.target.value)}>{departments.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}</select>
           <select className="h-11 rounded-ui border border-[#D9E3F2] bg-white px-3" value={year} onChange={(event) => setYear(Number(event.target.value) as Year)}>{years.map((item) => <option key={item}>{item}</option>)}</select>
-          <select className="h-11 rounded-ui border border-[#D9E3F2] bg-white px-3" value={priority} onChange={(event) => setPriority(event.target.value)}>{['全部优先级', '高', '中', '低', ''].map((item) => <option key={item} value={item}>{item || '—'}</option>)}</select>
+          <select className="h-11 rounded-ui border border-[#D9E3F2] bg-white px-3" aria-label="任务标签" value={tag} onChange={(event) => setTag(event.target.value)}>{['全部标签', ...Array.from(new Set(tasks.map((task) => task.tag || '')))].map((item) => <option key={item} value={item}>{item || '—'}</option>)}</select>
           <div className="flex rounded-ui border border-[#D9E3F2] bg-white p-1">
             <button className={`grid h-9 w-9 place-items-center rounded-xl ${view === 'card' ? 'bg-brand-500 text-white' : 'text-muted'}`} onClick={() => setView('card')} aria-label="卡片视图"><LayoutGrid size={18} /></button>
             <button className={`grid h-9 w-9 place-items-center rounded-xl ${view === 'table' ? 'bg-brand-500 text-white' : 'text-muted'}`} onClick={() => setView('table')} aria-label="表格视图"><List size={18} /></button>
@@ -126,7 +127,7 @@ function StrategyTaskTable({ tasks, reports, year }: { tasks: StrategicTask[]; r
       <table className="w-full border-collapse text-left text-sm">
         <thead className="bg-[#F6F9FE] text-muted">
           <tr>
-            {['编号', '任务名称', '业务板块', '牵头部门', '优先级', '总体进度', `${year}年度进度`, '状态', '操作'].map((head) => <th key={head} className="px-4 py-3 font-bold">{head}</th>)}
+            {['编号', '任务名称', '业务板块', '牵头部门', '标签', '总体进度', `${year}年度进度`, '状态', '操作'].map((head) => <th key={head} className="px-4 py-3 font-bold">{head}</th>)}
           </tr>
         </thead>
         <tbody>
@@ -139,7 +140,7 @@ function StrategyTaskTable({ tasks, reports, year }: { tasks: StrategicTask[]; r
                 <td className="px-4 py-4"><Link className="font-bold text-ink hover:text-brand-500" to={`/tasks/${task.id}`}>{task.title}</Link></td>
                 <td className="px-4 py-4 text-muted">{task.businessArea}</td>
                 <td className="px-4 py-4 text-muted">{task.leadDepartmentName}</td>
-                <td className="px-4 py-4">{task.priority || '—'}</td>
+                <td className="px-4 py-4">{task.tag || '—'}</td>
                 <td className="px-4 py-4 font-bold text-brand-500">{summary.displayProgress == null ? '待业务填报' : `${summary.displayProgress}%`}</td>
                 <td className="px-4 py-4">{yearProgress == null ? '—' : `${yearProgress}%`}</td>
                 <td className="px-4 py-4">{calculateTaskReportingStatus(task, task.leadDepartmentId, reports, year)}</td>

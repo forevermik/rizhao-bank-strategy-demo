@@ -48,7 +48,13 @@ export type YearlyPlan = {
   nodes: TaskNode[];
 };
 
+export type TaskSource = { file: string; sheet: string; row: number; column?: string };
+
 export type StrategicTask = {
+  tag?: string;
+  source?: TaskSource;
+  leadDepartmentIds?: string[];
+  leadDepartmentNames?: string[];
   id: string;
   code: string;
   businessArea: string;
@@ -72,6 +78,7 @@ export type StrategicTask = {
 };
 
 export type CompletionStandardItem = {
+  source?: TaskSource;
   id: string;
   taskId: string;
   order: number;

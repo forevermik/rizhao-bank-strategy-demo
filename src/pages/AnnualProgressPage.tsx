@@ -1,3 +1,4 @@
+import { getTaskLeads } from '../utils/taskSelectors';
 import { useMemo, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { CalendarCheck, ClockAlert, Database, ListChecks, Search } from 'lucide-react';
@@ -35,7 +36,7 @@ export function AnnualProgressPage() {
   const taskOptions = [{ id: '全部任务', name: '全部任务' }, ...visibleTasks.map((task) => ({ id: task.id, name: `${task.code} ${task.title}` }))];
   const departmentOptions = [
     { id: '全部牵头部门', name: '全部牵头部门' },
-    ...Array.from(new Map(visibleTasks.map((task) => [task.leadDepartmentId, { id: task.leadDepartmentId, name: task.leadDepartmentName }])).values()),
+    ...Array.from(new Map(visibleTasks.flatMap(getTaskLeads).map((lead) => [lead.id, lead])).values()),
   ];
   const areaOptions = ['全部板块', ...Array.from(new Set(visibleTasks.map((task) => task.businessArea)))];
 
@@ -55,7 +56,7 @@ export function AnnualProgressPage() {
       || (reportStatus === '已达成' && progress != null && progress >= 100)
       || (reportStatus === '仅逾期' && overdue);
     const taskOk = taskId === '全部任务' || task.id === taskId;
-    const deptOk = leadDept === '全部牵头部门' || task.leadDepartmentId === leadDept;
+    const deptOk = leadDept === '全部牵头部门' || getTaskLeads(task).some((lead) => lead.id === leadDept);
     const areaOk = area === '全部板块' || task.businessArea === area;
     const typeOk = standardType === '全部标准类型' || (standardType === '指标类' ? standard.type === 'metric' : standard.type !== 'metric');
     const queryOk = !keyword || `${task.code}${task.title}${standard.name}${standard.sourceText}${task.leadDepartmentName}`.includes(keyword);
