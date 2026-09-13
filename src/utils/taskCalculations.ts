@@ -3,6 +3,14 @@ import type { StrategicTask, TaskNode, Year } from '../types';
 
 export const years: Year[] = [2026, 2027, 2028, 2029, 2030];
 
+export function getTaskImplementationYears(task: StrategicTask): Year[] {
+  const periodYears = task.period.match(/20(?:2[6-9]|30)/g)?.map(Number) ?? [];
+  if (!periodYears.length) return [];
+  const startYear = Math.min(...periodYears);
+  const endYear = Math.max(...periodYears);
+  return years.filter((year) => year >= startYear && year <= endYear);
+}
+
 export function taskNodes(task: StrategicTask) {
   return task.yearlyPlans.flatMap((plan) => plan.nodes);
 }

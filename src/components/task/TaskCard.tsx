@@ -4,7 +4,7 @@ import { Edit3, Info, LockKeyhole } from 'lucide-react';
 import type { StrategicTask, Year } from '../../types';
 import { useAuth } from '../../hooks/useAuth';
 import { useCompletionReports } from '../../hooks/useCompletionReports';
-import { years } from '../../utils/taskCalculations';
+import { getTaskImplementationYears } from '../../utils/taskCalculations';
 import {
   calculateStandardYearProgress,
   getTaskProgressSummary,
@@ -19,6 +19,7 @@ export function TaskCard({ task, relation, year = 2026 }: { task: StrategicTask;
   const relationLabel = relation === 'lead' ? '我牵头' : relation === 'support' ? '我协同' : '';
   const canReport = user?.role === 'department' && relation === 'lead';
   const isLockedForSupport = user?.role === 'department' && relation === 'support';
+  const implementationYears = getTaskImplementationYears(task);
 
   return (
     <article className="soft-panel group rounded-ui p-3.5 transition duration-200 hover:-translate-y-0.5 hover:shadow-glow">
@@ -63,8 +64,8 @@ export function TaskCard({ task, relation, year = 2026 }: { task: StrategicTask;
         </div>
       </div>
 
-      <div className="mt-2.5 grid grid-cols-5 gap-1">
-        {years.map((itemYear) => {
+      {implementationYears.length > 0 && <div className="mt-2.5 grid gap-1" style={{ gridTemplateColumns: `repeat(${implementationYears.length}, minmax(0, 1fr))` }}>
+        {implementationYears.map((itemYear) => {
           const yearProgress = calculateStandardYearProgress(task, itemYear, reports);
           return (
             <div key={itemYear} className={`rounded-lg p-1 ${itemYear === year ? 'bg-brand-50' : 'bg-[#F6F9FE]'}`} title={`${itemYear} 年度进度：${yearProgress == null ? '—' : `${yearProgress}%`}`}>
@@ -76,7 +77,7 @@ export function TaskCard({ task, relation, year = 2026 }: { task: StrategicTask;
             </div>
           );
         })}
-      </div>
+      </div>}
 
       <div className="mt-2.5 flex items-center justify-end gap-1.5">
         <Link to={`/tasks/${task.id}`} className="inline-flex h-8 items-center rounded-xl border border-[#D9E3F2] bg-white px-3 text-xs font-bold text-brand-500 shadow-sm">
