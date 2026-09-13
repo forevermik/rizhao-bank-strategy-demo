@@ -38,7 +38,7 @@ export function TaskCard({ task, relation, year = 2026 }: { task: StrategicTask;
 
       <div className="mt-2.5 grid grid-cols-3 gap-1.5 text-xs">
         <MiniInfo label="牵头" value={task.leadDepartmentName || '—'} />
-        <MiniInfo label="协同" value={task.supportingDepartmentNames.join('、') || '—'} />
+        <MiniInfo label="协同" value={`${task.supportingDepartmentNames.length} 个`} />
         <MiniInfo label="实施时间" value={task.period || '—'} />
       </div>
 
