@@ -19,6 +19,7 @@ export function TaskCard({ task, relation, year = 2026 }: { task: StrategicTask;
   const relationLabel = relation === 'lead' ? '我牵头' : relation === 'support' ? '我协同' : '';
   const canReport = user?.role === 'department' && relation === 'lead';
   const isLockedForSupport = user?.role === 'department' && relation === 'support';
+  const isStrategy = user?.role === 'strategy';
   const implementationYears = getTaskImplementationYears(task);
 
   return (
@@ -88,8 +89,8 @@ export function TaskCard({ task, relation, year = 2026 }: { task: StrategicTask;
             <Edit3 size={13} /> 填报进度
           </Link>
         ) : (
-          <Link to={`/tasks/${task.id}?year=${year}`} className={`inline-flex h-8 items-center gap-1 rounded-xl px-3 text-xs font-bold ${isLockedForSupport ? 'border border-[#D9E3F2] bg-[#F8FBFF] text-muted' : 'bg-brand-50 text-brand-500'}`}>
-            {isLockedForSupport && <LockKeyhole size={13} />} {isLockedForSupport ? '查看进度' : '查看填报'}
+          <Link to={isStrategy ? `/tasks/${task.id}?year=${year}&review=1` : `/tasks/${task.id}?year=${year}`} className={`inline-flex h-8 items-center gap-1 rounded-xl px-3 text-xs font-bold ${isLockedForSupport ? 'border border-[#D9E3F2] bg-[#F8FBFF] text-muted' : 'bg-brand-50 text-brand-500'}`}>
+            {isLockedForSupport && <LockKeyhole size={13} />} {isStrategy ? '审核进度' : isLockedForSupport ? '查看进度' : '查看填报'}
           </Link>
         )}
       </div>

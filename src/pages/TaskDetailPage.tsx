@@ -35,7 +35,8 @@ export function TaskDetailPage() {
   const task = tasks.find((item) => item.id === taskId);
   const initialYear = Number(searchParams.get('year')) as Year;
   const editMode = searchParams.get('mode') === 'edit';
-  const [tab, setTab] = useState<Tab>(editMode ? 'standards' : 'overview');
+  const reviewMode = searchParams.get('review') === '1';
+  const [tab, setTab] = useState<Tab>(editMode || reviewMode ? 'standards' : 'overview');
   const [tableMode, setTableMode] = useState<TableMode>('all');
   const [selectedYear, setSelectedYear] = useState<Year>(years.includes(initialYear) ? initialYear : CURRENT_DEMO_YEAR);
   const [showRule, setShowRule] = useState(false);
@@ -57,7 +58,7 @@ export function TaskDetailPage() {
           <ArrowLeft size={18} /> {user?.role === 'strategy' ? '返回战略任务' : '返回工作台'}
         </Link>
         <button onClick={() => { setTab('standards'); setTableMode('all'); }} className={`inline-flex h-10 items-center gap-2 rounded-xl px-4 text-sm font-bold ${canEdit ? 'bg-brand-500 text-white' : 'border border-[#D9E3F2] bg-[#F8FBFF] text-muted'}`}>
-          {!canEdit && <LockKeyhole size={15} />}{canEdit ? '填报进度' : isLockedForSupport ? '查看进度（只读）' : '查看进度'}
+          {!canEdit && user?.role !== 'strategy' && <LockKeyhole size={15} />}{canEdit ? '填报进度' : user?.role === 'strategy' ? '进入审核' : isLockedForSupport ? '查看进度（只读）' : '查看进度'}
         </button>
       </div>
 
@@ -132,7 +133,10 @@ export function TaskDetailPage() {
               {standards.map((standard) => (
                 <article key={standard.id} className="rounded-ui border border-[#D9E3F2] bg-white p-4">
                   <div className="text-sm font-black text-brand-500">标准 {standard.order}</div>
-                  <p className="mt-2 whitespace-pre-wrap text-sm leading-7 text-[#344054]">{standard.sourceText}</p>
+                  <p className="mt-2 whitespace-pre-wrap text-sm font-bold leading-7 text-[#344054]">{standard.name || standard.sourceText}</p>
+                  {normalizeText(standard.name || standard.sourceText) !== normalizeText(standard.sourceText) && (
+                    <p className="mt-2 whitespace-pre-wrap text-xs leading-6 text-muted">{standard.sourceText}</p>
+                  )}
                 </article>
               ))}
               {!standards.length && <div className="rounded-xl bg-[#F8FBFF] p-4 text-sm font-semibold text-muted">暂无完成标准</div>}
@@ -278,7 +282,9 @@ function CompletionStandardTable({
                   <StickyCell left={0} className="font-black text-brand-500">{standard.order}</StickyCell>
                   <StickyCell left={56}>
                     <div className="whitespace-pre-wrap font-bold leading-6 text-ink">{standard.name || standard.sourceText}</div>
-                    <div className="mt-1 whitespace-pre-wrap text-xs leading-5 text-muted">{standard.sourceText}</div>
+                    {normalizeText(standard.name || standard.sourceText) !== normalizeText(standard.sourceText) && (
+                      <div className="mt-1 whitespace-pre-wrap text-xs leading-5 text-muted">{standard.sourceText}</div>
+                    )}
                   </StickyCell>
                   <StickyCell left={276}>{standardTypeLabel(standard.type)}</StickyCell>
                   <StickyCell left={364}>{standard.unit || '—'}</StickyCell>
@@ -347,7 +353,7 @@ function TaskReviewPanel({
   if (userRole === 'strategy') {
     return (
       <div className="mb-4 rounded-xl border border-[#D9E3F2] bg-[#F8FBFF] p-4">
-        <div className="font-black text-ink">战略管理部审核 · {year} 年</div>
+        <div className="font-black text-ink">战略管理部审核与反馈 · {year} 年</div>
         <p className="mt-1 text-sm text-muted">查看下方填报内容后，对各牵头部门本年度任务进度作出审核结论。</p>
         <div className="mt-3 space-y-3">
           {getTaskLeads(task).map((lead) => {

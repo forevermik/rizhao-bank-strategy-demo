@@ -163,7 +163,7 @@ function StrategyTaskTable({ tasks, reports, year }: { tasks: StrategicTask[]; r
                 <td className="px-4 py-4 font-bold text-brand-500">{summary.displayProgress == null ? '待业务填报' : `${summary.displayProgress}%`}</td>
                 <td className="px-4 py-4">{yearProgress == null ? '—' : `${yearProgress}%`}</td>
                 <td className="px-4 py-4">{strategyReviewStatusLabel(reviewStatus)}</td>
-                <td className="px-4 py-4"><Link className="font-bold text-brand-500" to={`/tasks/${task.id}?year=${year}`}>{reviewStatus === 'pending' ? '进入审核' : reviewStatus === 'rejected' ? '查看退回' : '查看填报'}</Link></td>
+                <td className="px-4 py-4"><Link className="font-bold text-brand-500" to={`/tasks/${task.id}?year=${year}&review=1`}>{reviewStatus === 'pending' ? '进入审核' : reviewStatus === 'rejected' ? '查看退回' : '查看填报'}</Link></td>
               </tr>
             );
           })}
