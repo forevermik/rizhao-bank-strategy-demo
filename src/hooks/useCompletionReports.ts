@@ -25,8 +25,25 @@ export function useCompletionReports() {
   }
 
   function saveReport(report: AnnualStandardReport) {
-    const next = reports.filter((item) => !(item.taskId === report.taskId && item.standardId === report.standardId && item.year === report.year && item.departmentId === report.departmentId));
-    setState({ reports: [...next, report] });
+    const submittedAt = new Date().toISOString();
+    const previousFeedback = reports.find((item) => item.taskId === report.taskId && item.year === report.year && item.departmentId === report.departmentId && item.reviewFeedback)?.reviewFeedback ?? '';
+    const resetReview = reports.map((item) => item.taskId === report.taskId && item.year === report.year && item.departmentId === report.departmentId
+      ? { ...item, reviewStatus: 'pending' as const, submittedAt, reviewedAt: undefined }
+      : item);
+    const next = resetReview.filter((item) => !(item.taskId === report.taskId && item.standardId === report.standardId && item.year === report.year && item.departmentId === report.departmentId));
+    setState({ reports: [...next, { ...report, reviewStatus: 'pending', reviewFeedback: previousFeedback, submittedAt, reviewedAt: undefined }] });
+  }
+
+  function reviewTaskReports(taskId: string, year: Year, departmentId: string, reviewStatus: 'approved' | 'rejected', reviewFeedback = '') {
+    const feedback = reviewFeedback.trim();
+    if (reviewStatus === 'rejected' && !feedback) return false;
+    const reviewedAt = new Date().toISOString();
+    setState({
+      reports: reports.map((item) => item.taskId === taskId && item.year === year && item.departmentId === departmentId
+        ? { ...item, reviewStatus, reviewFeedback: reviewStatus === 'rejected' ? feedback : '', reviewedAt }
+        : item),
+    });
+    return true;
   }
 
   function resetReport(taskId: string, standardId: string, year: Year, departmentId: string) {
@@ -35,7 +52,7 @@ export function useCompletionReports() {
     });
   }
 
-  return { reports, getReport, saveReport, resetReport };
+  return { reports, getReport, saveReport, reviewTaskReports, resetReport };
 }
 
 export function migrateCompletionReportsV3ToV4(setState: (state: ReportState) => void) {

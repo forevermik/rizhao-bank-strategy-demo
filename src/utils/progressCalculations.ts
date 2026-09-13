@@ -7,6 +7,7 @@ import type {
   StandardYearProgress,
   StrategicTask,
   TaskProgressSummary,
+  TaskReviewStatus,
   Year,
 } from '../types';
 import { DEMO_DATA_AS_OF_DATE } from '../data/constants';
@@ -120,10 +121,27 @@ export function calculateScheduleProgress(task: StrategicTask) {
 }
 
 export function calculateStandardOverallProgress(task: StrategicTask, reports: AnnualStandardReport[]) {
+  const latestByStandard = new Map<string, AnnualStandardReport>();
+  for (const report of taskLeadReports(task, reports)) {
+    const key = `${report.standardId}:${report.departmentId}`;
+    const current = latestByStandard.get(key);
+    if (!current || report.year > current.year) latestByStandard.set(key, report);
+  }
+  const progressValues = [...latestByStandard.values()]
+    .map((report) => normalizedProgress(report.manualProgress))
+    .filter((value): value is number => value != null);
+  const standardCount = getTaskStandards(task.id).length * taskLeadDepartmentIds(task).length;
+  if (progressValues.length && standardCount) return Math.round(progressValues.reduce((sum, value) => sum + value, 0) / standardCount);
   return task.overallProgress || null;
 }
 
 export function calculateStandardYearProgress(task: StrategicTask, year: Year, reports: AnnualStandardReport[]) {
+  const progressValues = taskLeadReports(task, reports)
+    .filter((report) => report.year === year)
+    .map((report) => normalizedProgress(report.manualProgress))
+    .filter((value): value is number => value != null);
+  const standardCount = getTaskStandards(task.id).length * taskLeadDepartmentIds(task).length;
+  if (progressValues.length && standardCount) return Math.round(progressValues.reduce((sum, value) => sum + value, 0) / standardCount);
   return task.yearlyPlans.find((plan) => plan.year === year)?.progress || null;
 }
 
@@ -172,26 +190,40 @@ export function calculateTaskReportingStatus(task: StrategicTask, departmentId: 
   if (!departmentId) return '待更新';
   const standards = getTaskStandards(task.id);
   if (!standards.length) return '暂无完成标准';
-  const departmentReports = cleanReports(reports).filter((report) => report.taskId === task.id && report.departmentId === departmentId && report.year === year);
+  if (!taskLeadDepartmentIds(task).includes(departmentId)) return '仅查看';
+  const reviewStatus = getTaskReviewStatus(task, departmentId, reports, year);
+  if (reviewStatus === 'rejected') return '待更新';
+  if (reviewStatus === 'pending') return '待审核';
+  if (reviewStatus === 'approved') return '审核通过';
   if (isTaskOverdueByStandards(task, reports)) return '逾期';
-  if (departmentReports.some((report) => report.reportStatus === 'completed')) return '已填报';
   return '待更新';
+}
+
+export function getTaskReviewStatus(task: StrategicTask, departmentId: string, reports: AnnualStandardReport[], year: Year): TaskReviewStatus {
+  const submitted = cleanReports(reports).filter((report) => report.taskId === task.id && report.departmentId === departmentId && report.year === year);
+  const requiredStandardIds = new Set(getTaskStandards(task.id).map((standard) => standard.id));
+  const submittedStandardIds = new Set(submitted.map((report) => report.standardId));
+  if (!requiredStandardIds.size || [...requiredStandardIds].some((standardId) => !submittedStandardIds.has(standardId))) return 'unsubmitted';
+  if (submitted.some((report) => report.reviewStatus === 'rejected')) return 'rejected';
+  if (submitted.every((report) => report.reviewStatus === 'approved')) return 'approved';
+  return 'pending';
 }
 
 export function isTaskCompletedByStandards(task: StrategicTask, reports: AnnualStandardReport[]) {
   const standards = getTaskStandards(task.id);
   if (!standards.length) return false;
-  return standards.every((standard) => {
-    const latest = latestReportForStandard(cleanReports(reports), standard.id, task.leadDepartmentId);
+  const leadDepartmentIds = taskLeadDepartmentIds(task);
+  return standards.every((standard) => leadDepartmentIds.every((departmentId) => {
+    const latest = latestReportForStandard(cleanReports(reports), standard.id, [departmentId]);
     const progress = normalizedProgress(calculateMetricProgress(standard, latest, latest?.year));
-    return progress != null && progress >= 100;
-  });
+    return progress != null && progress >= 100 && latest?.reviewStatus === 'approved';
+  }));
 }
 
 export function isTaskOverdueByStandards(task: StrategicTask, reports: AnnualStandardReport[]) {
   return getTaskStandards(task.id).some((standard) => {
     if (!standard.finalTargetDate || standard.finalTargetDate >= DEMO_DATA_AS_OF_DATE) return false;
-    const latest = latestReportForStandard(cleanReports(reports), standard.id, task.leadDepartmentId);
+    const latest = latestReportForStandard(cleanReports(reports), standard.id, taskLeadDepartmentIds(task));
     const progress = normalizedProgress(calculateMetricProgress(standard, latest, latest?.year));
     return progress == null || progress < 100;
   });
@@ -209,10 +241,19 @@ export function standardTypeLabel(type: CompletionStandardItem['type']) {
   return '混合类';
 }
 
-function latestReportForStandard(reports: AnnualStandardReport[], standardId: string, departmentId: string) {
+function latestReportForStandard(reports: AnnualStandardReport[], standardId: string, departmentIds: string[]) {
   return reports
-    .filter((report) => report.standardId === standardId && report.departmentId === departmentId)
+    .filter((report) => report.standardId === standardId && departmentIds.includes(report.departmentId))
     .sort((a, b) => b.year - a.year)[0];
+}
+
+function taskLeadDepartmentIds(task: StrategicTask) {
+  return task.leadDepartmentIds ?? [task.leadDepartmentId];
+}
+
+function taskLeadReports(task: StrategicTask, reports: AnnualStandardReport[]) {
+  const leadDepartmentIds = taskLeadDepartmentIds(task);
+  return cleanReports(reports).filter((report) => report.taskId === task.id && leadDepartmentIds.includes(report.departmentId));
 }
 
 function findIndicatorForStandard(standard: CompletionStandardItem): Indicator | undefined {

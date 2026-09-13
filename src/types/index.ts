@@ -104,7 +104,13 @@ export type AnnualStandardReport = {
   manualProgress: number | null;
   note: string;
   reportStatus: 'unreported' | 'draft' | 'completed';
+  reviewStatus?: 'pending' | 'approved' | 'rejected';
+  reviewFeedback?: string;
+  submittedAt?: string;
+  reviewedAt?: string;
 };
+
+export type TaskReviewStatus = 'unsubmitted' | 'pending' | 'approved' | 'rejected';
 
 export type ProgressSource =
   | 'annual-target-path'

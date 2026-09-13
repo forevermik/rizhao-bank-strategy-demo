@@ -18,7 +18,7 @@ import {
   isTaskOverdueByStandards,
 } from '../utils/progressCalculations';
 
-type WorkbenchTab = 'pending' | 'reported' | 'overdue' | 'all' | 'lead' | 'support';
+type WorkbenchTab = 'pending' | 'reviewing' | 'approved' | 'overdue' | 'all' | 'lead' | 'support';
 
 export function DepartmentWorkbenchPage() {
   const { user } = useAuth();
@@ -35,11 +35,12 @@ export function DepartmentWorkbenchPage() {
   const visibleTasks = useMemo(() => getVisibleTasks(tasks, user), [tasks, user]);
   const leadTasks = useMemo(() => getLeadTasks(visibleTasks, user?.departmentId), [user?.departmentId, visibleTasks]);
   const supportTasks = useMemo(() => getSupportTasks(visibleTasks, user?.departmentId), [user?.departmentId, visibleTasks]);
-  const pendingTasks = visibleTasks.filter((task) => calculateTaskReportingStatus(task, user?.departmentId, reports, year) === '待更新');
-  const reportedTasks = visibleTasks.filter((task) => calculateTaskReportingStatus(task, user?.departmentId, reports, year) === '已填报');
+  const pendingTasks = leadTasks.filter((task) => calculateTaskReportingStatus(task, user?.departmentId, reports, year) === '待更新');
+  const reviewingTasks = leadTasks.filter((task) => calculateTaskReportingStatus(task, user?.departmentId, reports, year) === '待审核');
+  const approvedTasks = leadTasks.filter((task) => calculateTaskReportingStatus(task, user?.departmentId, reports, year) === '审核通过');
   const overdueTasks = visibleTasks.filter((task) => isTaskOverdueByStandards(task, reports));
 
-  const tabTasks = tab === 'lead' ? leadTasks : tab === 'support' ? supportTasks : tab === 'pending' ? pendingTasks : tab === 'reported' ? reportedTasks : tab === 'overdue' ? overdueTasks : visibleTasks;
+  const tabTasks = tab === 'lead' ? leadTasks : tab === 'support' ? supportTasks : tab === 'pending' ? pendingTasks : tab === 'reviewing' ? reviewingTasks : tab === 'approved' ? approvedTasks : tab === 'overdue' ? overdueTasks : visibleTasks;
   const filteredTasks = tabTasks
     .filter((task) => {
       const reportingStatus = calculateTaskReportingStatus(task, user?.departmentId, reports, year);
@@ -63,7 +64,7 @@ export function DepartmentWorkbenchPage() {
           <div>
             <div className="text-sm font-semibold text-brand-500">部门工作台</div>
             <h2 className="mt-1 text-3xl font-black text-ink">{user?.departmentName}</h2>
-            <p className="mt-2 text-sm text-muted">围绕本部门牵头与协同任务进行完成标准填报。</p>
+            <p className="mt-2 text-sm text-muted">牵头任务可填报进度，协同任务仅可查看；退回任务按审核意见整改后重新提交。</p>
           </div>
           <div className="grid grid-cols-4 gap-3">
             <MiniStat label="我牵头" value={leadTasks.length} />
@@ -78,7 +79,8 @@ export function DepartmentWorkbenchPage() {
         <div className="flex flex-wrap items-center gap-3">
           {[
             ['pending', `进度待更新 ${pendingTasks.length}`],
-            ['reported', `已填报 ${reportedTasks.length}`],
+            ['reviewing', `待审核 ${reviewingTasks.length}`],
+            ['approved', `审核通过 ${approvedTasks.length}`],
             ['overdue', `逾期 ${overdueTasks.length}`],
             ['all', `全部相关 ${visibleTasks.length}`],
             ['lead', `我牵头 ${leadTasks.length}`],
@@ -101,7 +103,7 @@ export function DepartmentWorkbenchPage() {
               {years.map((item) => <option key={item}>{item}</option>)}
             </select>
             <select className="h-10 rounded-xl border border-[#D9E3F2] bg-white px-3" value={status} onChange={(event) => setStatus(event.target.value)}>
-              {['全部状态', '待更新', '已更新', '逾期', '暂无完成标准'].map((item) => <option key={item}>{item}</option>)}
+              {['全部状态', '待更新', '待审核', '审核通过', '逾期', '仅查看', '暂无完成标准'].map((item) => <option key={item}>{item}</option>)}
             </select>
             <select className="h-10 rounded-xl border border-[#D9E3F2] bg-white px-3" value={priority} onChange={(event) => setPriority(event.target.value)}>
               {['全部优先级', '高', '中', '低', ''].map((item) => <option key={item} value={item}>{item || '—'}</option>)}
@@ -183,7 +185,8 @@ function taskSortWeight(task: StrategicTask, reports: ReturnType<typeof useCompl
   if (isTaskOverdueByStandards(task, reports)) return 1;
   const status = calculateTaskReportingStatus(task, departmentId, reports, year);
   if (status === '待更新') return 2;
-  if (status === '已填报' && !isTaskCompletedByStandards(task, reports)) return 3;
+  if (status === '待审核') return 3;
+  if (status === '审核通过' && !isTaskCompletedByStandards(task, reports)) return 4;
   if (isTaskCompletedByStandards(task, reports)) return 4;
   return 5;
 }
