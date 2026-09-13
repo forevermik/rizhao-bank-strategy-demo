@@ -34,7 +34,7 @@ export function canViewTask(task: StrategicTask, user: SessionUser | null) {
 export function canEditTask(task: StrategicTask, user: SessionUser | null) {
   if (!user) return false;
   if (user.role === 'strategy') return true;
-  return getTaskRelation(task, user.departmentId) !== 'none';
+  return getTaskRelation(task, user.departmentId) === 'lead';
 }
 
 export function validateTaskDepartmentRelations(tasks: StrategicTask[], departmentIds: Set<string>) {

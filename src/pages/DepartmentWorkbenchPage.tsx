@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
-import { Edit3, LayoutGrid, List, Search } from 'lucide-react';
+import { Edit3, LayoutGrid, List, LockKeyhole, Search } from 'lucide-react';
 import { EmptyState } from '../components/common/EmptyState';
 import { TaskCard } from '../components/task/TaskCard';
 import { CURRENT_DEMO_YEAR } from '../data/constants';
@@ -163,7 +163,11 @@ function TaskTable({ tasks, year, departmentId, reports }: { tasks: StrategicTas
                 <td className="px-4 py-3">
                   <div className="flex gap-2">
                     <Link className="font-bold text-brand-500" to={`/tasks/${task.id}`}>查看详情</Link>
-                    <Link className="inline-flex items-center gap-1 font-bold text-[#087D92]" to={`/tasks/${task.id}?year=${year}&mode=edit`}><Edit3 size={14} />填报进度</Link>
+                    {relation === 'lead' ? (
+                      <Link className="inline-flex items-center gap-1 font-bold text-[#087D92]" to={`/tasks/${task.id}?year=${year}&mode=edit`}><Edit3 size={14} />填报进度</Link>
+                    ) : (
+                      <Link className="inline-flex items-center gap-1 font-bold text-muted" to={`/tasks/${task.id}?year=${year}`}><LockKeyhole size={14} />查看进度</Link>
+                    )}
                   </div>
                 </td>
               </tr>

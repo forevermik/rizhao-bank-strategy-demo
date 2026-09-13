@@ -143,8 +143,8 @@ export function AnnualProgressPage() {
                     <td className="px-4 py-3">{standard.type === 'metric' ? '指标类' : '非指标类'}</td>
                     <td className="px-4 py-3">{progress == null ? '—' : `${progress}%`}</td>
                     <td className="px-4 py-3">{overdue ? <span className="font-bold text-[#B54708]">是</span> : '否'}</td>
-                    <td className="px-4 py-3">{user?.role === 'department' ? (relation === 'lead' ? '牵头填报' : '协同填报') : task.leadDepartmentName}</td>
-                    <td className="px-4 py-3"><Link className="font-bold text-brand-500" to={`/tasks/${task.id}?year=${year}${user?.role === 'department' ? '&mode=edit' : ''}`}>{user?.role === 'department' ? '进入填报' : '查看填报'}</Link></td>
+                    <td className="px-4 py-3">{user?.role === 'department' ? (relation === 'lead' ? '牵头填报' : '协同查看') : task.leadDepartmentName}</td>
+                    <td className="px-4 py-3"><Link className="font-bold text-brand-500" to={`/tasks/${task.id}?year=${year}${relation === 'lead' ? '&mode=edit' : ''}`}>{relation === 'lead' ? '进入填报' : '查看填报'}</Link></td>
                   </tr>
                 );
               })}

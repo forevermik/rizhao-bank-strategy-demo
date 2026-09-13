@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Edit3, Info } from 'lucide-react';
+import { Edit3, Info, LockKeyhole } from 'lucide-react';
 import type { StrategicTask, Year } from '../../types';
 import { useAuth } from '../../hooks/useAuth';
 import { useCompletionReports } from '../../hooks/useCompletionReports';
@@ -17,7 +17,8 @@ export function TaskCard({ task, relation, year = 2026 }: { task: StrategicTask;
   const [showRule, setShowRule] = useState(false);
   const summary = getTaskProgressSummary(task, reports, year);
   const relationLabel = relation === 'lead' ? '我牵头' : relation === 'support' ? '我协同' : '';
-  const canReport = user?.role === 'department' && relation !== 'none';
+  const canReport = user?.role === 'department' && relation === 'lead';
+  const isLockedForSupport = user?.role === 'department' && relation === 'support';
 
   return (
     <article className="soft-panel group rounded-ui p-3.5 transition duration-200 hover:-translate-y-0.5 hover:shadow-glow">
@@ -86,8 +87,8 @@ export function TaskCard({ task, relation, year = 2026 }: { task: StrategicTask;
             <Edit3 size={13} /> 填报进度
           </Link>
         ) : (
-          <Link to={`/tasks/${task.id}?year=${year}`} className="inline-flex h-8 items-center rounded-xl bg-brand-50 px-3 text-xs font-bold text-brand-500">
-            查看填报
+          <Link to={`/tasks/${task.id}?year=${year}`} className={`inline-flex h-8 items-center gap-1 rounded-xl px-3 text-xs font-bold ${isLockedForSupport ? 'border border-[#D9E3F2] bg-[#F8FBFF] text-muted' : 'bg-brand-50 text-brand-500'}`}>
+            {isLockedForSupport && <LockKeyhole size={13} />} {isLockedForSupport ? '查看进度' : '查看填报'}
           </Link>
         )}
       </div>

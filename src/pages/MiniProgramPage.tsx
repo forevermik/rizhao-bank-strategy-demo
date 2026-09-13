@@ -179,7 +179,7 @@ function MiniAuthenticatedApp({ logout }: { logout: () => void }) {
               </div>
               <SearchBox query={query} setQuery={setQuery} />
               <div className="space-y-3">
-                {filteredTasks.slice(0, 12).map((task) => <MobileTaskCard key={task.id} task={task} year={year} canEdit={user?.role === 'department'} departmentId={user?.departmentId} reports={reports} />)}
+                {filteredTasks.slice(0, 12).map((task) => <MobileTaskCard key={task.id} task={task} year={year} canEdit={getTaskRelation(task, user?.departmentId) === 'lead'} departmentId={user?.departmentId} reports={reports} />)}
               </div>
             </div>
           )}
@@ -230,7 +230,7 @@ function MiniAuthenticatedApp({ logout }: { logout: () => void }) {
                       </div>
                       <div className="mt-2 text-sm text-muted">{standard.name || standard.sourceText}</div>
                       <div className="mt-2 flex items-center justify-between text-xs text-muted">
-                        <span>{user?.role === 'department' ? (relation === 'lead' ? '牵头填报' : '协同填报') : task.leadDepartmentName}</span>
+                        <span>{user?.role === 'department' ? (relation === 'lead' ? '牵头填报' : '协同查看') : task.leadDepartmentName}</span>
                         <span>{standard.finalTargetDate || '—'}</span>
                       </div>
                     </div>
@@ -372,7 +372,9 @@ function BusinessAreaList({ tasks }: { tasks: StrategicTask[] }) {
 function MobileTaskCard({ task, year, canEdit, departmentId, reports }: { task: StrategicTask; year: Year; canEdit: boolean; departmentId?: string; reports: ReturnType<typeof useCompletionReports>['reports'] }) {
   const progress = task.yearlyPlans.find((plan) => plan.year === year)?.progress || null;
   const overallProgress = task.overallProgress || null;
-  const relation = departmentId ? (task.leadDepartmentId === departmentId ? '我牵头' : '我协同') : task.leadDepartmentName;
+  const relationType = getTaskRelation(task, departmentId);
+  const relation = departmentId ? (relationType === 'lead' ? '我牵头' : '我协同') : task.leadDepartmentName;
+  const isLockedForSupport = relationType === 'support';
   return (
     <article className="rounded-[18px] bg-white p-4 shadow-sm">
       <div className="flex items-center justify-between gap-2">
@@ -390,8 +392,8 @@ function MobileTaskCard({ task, year, canEdit, departmentId, reports }: { task: 
         <Link to={`/tasks/${task.id}`} className="inline-flex h-8 items-center rounded-xl border border-[#D9E3F2] bg-white px-3 text-xs font-bold text-brand-500">
           查看详情
         </Link>
-        <Link to={`/tasks/${task.id}?year=${year}${canEdit ? '&mode=edit' : ''}`} className="inline-flex h-8 items-center gap-1 rounded-xl bg-brand-500 px-3 text-xs font-bold text-white">
-          <Edit3 size={13} /> {canEdit ? '填报进度' : '查看进度'}
+        <Link to={`/tasks/${task.id}?year=${year}${canEdit ? '&mode=edit' : ''}`} className={`inline-flex h-8 items-center gap-1 rounded-xl px-3 text-xs font-bold ${canEdit ? 'bg-brand-500 text-white' : 'border border-[#D9E3F2] bg-[#F8FBFF] text-muted'}`}>
+          {isLockedForSupport ? <LockKeyhole size={13} /> : <Edit3 size={13} />} {canEdit ? '填报进度' : '查看进度'}
         </Link>
       </div>
     </article>

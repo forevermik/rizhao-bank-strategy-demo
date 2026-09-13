@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link, Navigate, useParams, useSearchParams } from 'react-router-dom';
-import { ArrowLeft, Info } from 'lucide-react';
+import { ArrowLeft, Info, LockKeyhole } from 'lucide-react';
 import { EmptyState } from '../components/common/EmptyState';
 import { CURRENT_DEMO_YEAR } from '../data/constants';
 import { useAuth } from '../hooks/useAuth';
@@ -45,8 +45,9 @@ export function TaskDetailPage() {
   const relation = getTaskRelation(task, user?.departmentId);
   const standards = getTaskStandards(task.id);
   const summary = getTaskProgressSummary(task, reports, selectedYear);
-  const reportingLabel = relation === 'support' ? '本部门协同' : '牵头部门';
-  const canEdit = user?.role === 'department';
+  const reportingLabel = relation === 'lead' ? '牵头部门' : '本部门协同';
+  const canEdit = user?.role === 'department' && relation === 'lead';
+  const isLockedForSupport = user?.role === 'department' && relation === 'support';
 
   return (
     <div className="min-w-0 space-y-6">
@@ -54,7 +55,9 @@ export function TaskDetailPage() {
         <Link to={user?.role === 'strategy' ? '/tasks' : '/workbench'} className="inline-flex items-center gap-2 text-sm font-bold text-brand-500">
           <ArrowLeft size={18} /> {user?.role === 'strategy' ? '返回战略任务' : '返回工作台'}
         </Link>
-        <button onClick={() => { setTab('standards'); setTableMode('all'); }} className="inline-flex h-10 items-center rounded-xl bg-brand-500 px-4 text-sm font-bold text-white">{canEdit ? '填报进度' : '查看进度'}</button>
+        <button onClick={() => { setTab('standards'); setTableMode('all'); }} className={`inline-flex h-10 items-center gap-2 rounded-xl px-4 text-sm font-bold ${canEdit ? 'bg-brand-500 text-white' : 'border border-[#D9E3F2] bg-[#F8FBFF] text-muted'}`}>
+          {!canEdit && <LockKeyhole size={15} />}{canEdit ? '填报进度' : isLockedForSupport ? '查看进度（只读）' : '查看进度'}
+        </button>
       </div>
 
       <section className="soft-panel rounded-ui p-6">
@@ -141,6 +144,7 @@ export function TaskDetailPage() {
         <CompletionStandardTable
           reportingLabel={reportingLabel}
           canEdit={canEdit}
+          isLockedForSupport={isLockedForSupport}
           selectedYear={selectedYear}
           setSelectedYear={setSelectedYear}
           setTableMode={setTableMode}
@@ -156,6 +160,7 @@ export function TaskDetailPage() {
 function CompletionStandardTable({
   reportingLabel,
   canEdit,
+  isLockedForSupport,
   selectedYear,
   setSelectedYear,
   setTableMode,
@@ -165,6 +170,7 @@ function CompletionStandardTable({
 }: {
   reportingLabel: string;
   canEdit: boolean;
+  isLockedForSupport: boolean;
   selectedYear: Year;
   setSelectedYear: (year: Year) => void;
   setTableMode: (mode: TableMode) => void;
@@ -178,9 +184,10 @@ function CompletionStandardTable({
   const visibleYears = tableMode === 'all' ? years : [selectedYear];
   const [showRule, setShowRule] = useState(false);
   const minWidth = tableMode === 'all' ? 2900 : 1260;
-  const departmentId = user?.role === 'department' ? user.departmentId ?? task.leadDepartmentId : task.leadDepartmentId;
+  const departmentId = canEdit ? user?.departmentId ?? task.leadDepartmentId : task.leadDepartmentId;
 
   function saveTarget(standardId: string, year: Year, value: string) {
+    if (!canEdit) return;
     setTargetState({
       targets: {
         ...targetState.targets,
@@ -190,6 +197,7 @@ function CompletionStandardTable({
   }
 
   function saveYearReport(report: AnnualStandardReport) {
+    if (!canEdit) return;
     saveReport(report);
   }
 
@@ -199,7 +207,11 @@ function CompletionStandardTable({
         <div>
           <h3 className="text-xl font-black text-ink">任务完成标准年度达成表</h3>
           <p className="mt-2 text-sm font-semibold text-muted">
-            {canEdit ? `${reportingLabel} · 可填报年度目标、年度进度和达成说明。` : '战略管理部门 · 查看各部门年度目标、年度进度和达成说明。'}
+            {canEdit
+              ? `${reportingLabel} · 可填报年度目标、年度进度和达成说明。`
+              : isLockedForSupport
+                ? '协同部门 · 填报框已锁定，可查看牵头部门填报的年度目标、进度和达成说明。'
+                : '战略管理部门 · 查看各部门年度目标、年度进度和达成说明。'}
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
