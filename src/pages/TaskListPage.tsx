@@ -10,14 +10,14 @@ import { getTaskLeads } from '../utils/taskSelectors';
 import { years } from '../utils/taskCalculations';
 import {
   calculateStandardYearProgress,
+  calculateTaskReportingStatus,
   getTaskProgressSummary,
-  getTaskReviewStatus,
   hasPlanningConfiguration,
   isTaskCompletedByStandards,
   isTaskOverdueByStandards,
 } from '../utils/progressCalculations';
 
-type StrategyTaskTab = 'all' | 'planning-configured' | 'planning-missing' | 'reported' | 'unreported' | 'review-pending' | 'review-approved' | 'review-rejected' | 'overdue' | 'completed';
+type StrategyTaskTab = 'all' | 'planning-configured' | 'planning-missing' | 'reported' | 'unreported' | 'overdue' | 'completed';
 
 export function TaskListPage() {
   const [searchParams] = useSearchParams();
@@ -43,9 +43,6 @@ export function TaskListPage() {
     unreported: tasks.filter((task) => getTaskProgressSummary(task, reports, year).actualProgress == null).length,
     overdue: tasks.filter((task) => isTaskOverdueByStandards(task, reports)).length,
     completed: tasks.filter((task) => isTaskCompletedByStandards(task, reports)).length,
-    reviewPending: tasks.filter((task) => getStrategyTaskReviewStatus(task, reports, year) === 'pending').length,
-    reviewApproved: tasks.filter((task) => getStrategyTaskReviewStatus(task, reports, year) === 'approved').length,
-    reviewRejected: tasks.filter((task) => getStrategyTaskReviewStatus(task, reports, year) === 'rejected').length,
   };
   const filtered = useMemo(() => {
     const normalized = query.trim().toLowerCase();
@@ -58,9 +55,6 @@ export function TaskListPage() {
         tab === 'all'
         || (tab === 'reported' && getTaskProgressSummary(task, reports, year).displayProgress != null)
         || (tab === 'unreported' && getTaskProgressSummary(task, reports, year).actualProgress == null)
-        || (tab === 'review-pending' && getStrategyTaskReviewStatus(task, reports, year) === 'pending')
-        || (tab === 'review-approved' && getStrategyTaskReviewStatus(task, reports, year) === 'approved')
-        || (tab === 'review-rejected' && getStrategyTaskReviewStatus(task, reports, year) === 'rejected')
         || (tab === 'planning-configured' && hasPlanningConfiguration(task))
         || (tab === 'planning-missing' && !hasPlanningConfiguration(task))
         || (tab === 'overdue' && isTaskOverdueByStandards(task, reports))
@@ -78,18 +72,6 @@ export function TaskListPage() {
             ['all', `全部任务 ${counts.all}`],
             ['planning-configured', `已配置规划目标 ${counts.planningConfigured}`],
             ['planning-missing', `缺少规划目标 ${counts.planningMissing}`],
-          ].map(([key, label]) => (
-            <button key={key} onClick={() => setTab(key as StrategyTaskTab)} className={`h-10 rounded-xl px-4 text-sm font-bold ${tab === key ? 'bg-brand-500 text-white' : 'bg-[#F6F9FE] text-muted hover:text-brand-500'}`}>
-              {label}
-            </button>
-          ))}
-        </div>
-        <div className="mb-2 text-xs font-black text-muted">审核状态</div>
-        <div className="mb-4 flex flex-wrap gap-2">
-          {[
-            ['review-pending', `待审核 ${counts.reviewPending}`],
-            ['review-approved', `审核通过 ${counts.reviewApproved}`],
-            ['review-rejected', `已退回 ${counts.reviewRejected}`],
           ].map(([key, label]) => (
             <button key={key} onClick={() => setTab(key as StrategyTaskTab)} className={`h-10 rounded-xl px-4 text-sm font-bold ${tab === key ? 'bg-brand-500 text-white' : 'bg-[#F6F9FE] text-muted hover:text-brand-500'}`}>
               {label}
@@ -152,7 +134,6 @@ function StrategyTaskTable({ tasks, reports, year }: { tasks: StrategicTask[]; r
           {tasks.map((task) => {
             const summary = getTaskProgressSummary(task, reports, year);
             const yearProgress = calculateStandardYearProgress(task, year, reports);
-            const reviewStatus = getStrategyTaskReviewStatus(task, reports, year);
             return (
               <tr key={task.id} className="border-t border-[#E4EBF5] hover:bg-brand-50/50">
                 <td className="px-4 py-4 font-extrabold text-brand-500">{task.code}</td>
@@ -162,8 +143,8 @@ function StrategyTaskTable({ tasks, reports, year }: { tasks: StrategicTask[]; r
                 <td className="px-4 py-4">{task.tag || '—'}</td>
                 <td className="px-4 py-4 font-bold text-brand-500">{summary.displayProgress == null ? '待业务填报' : `${summary.displayProgress}%`}</td>
                 <td className="px-4 py-4">{yearProgress == null ? '—' : `${yearProgress}%`}</td>
-                <td className="px-4 py-4">{strategyReviewStatusLabel(reviewStatus)}</td>
-                <td className="px-4 py-4"><Link className="font-bold text-brand-500" to={`/tasks/${task.id}?year=${year}&review=1`}>{reviewStatus === 'pending' ? '进入审核' : reviewStatus === 'rejected' ? '查看退回' : '查看填报'}</Link></td>
+                <td className="px-4 py-4">{calculateTaskReportingStatus(task, task.leadDepartmentId, reports, year)}</td>
+                <td className="px-4 py-4"><Link className="font-bold text-brand-500" to={`/tasks/${task.id}?year=${year}`}>查看进度</Link></td>
               </tr>
             );
           })}
@@ -171,19 +152,4 @@ function StrategyTaskTable({ tasks, reports, year }: { tasks: StrategicTask[]; r
       </table>
     </div>
   );
-}
-
-function getStrategyTaskReviewStatus(task: StrategicTask, reports: ReturnType<typeof useCompletionReports>['reports'], year: Year) {
-  const statuses = getTaskLeads(task).map((lead) => getTaskReviewStatus(task, lead.id, reports, year));
-  if (statuses.some((status) => status === 'rejected')) return 'rejected';
-  if (statuses.some((status) => status === 'pending')) return 'pending';
-  if (statuses.length && statuses.every((status) => status === 'approved')) return 'approved';
-  return 'unsubmitted';
-}
-
-function strategyReviewStatusLabel(status: ReturnType<typeof getStrategyTaskReviewStatus>) {
-  if (status === 'pending') return '待审核';
-  if (status === 'approved') return '审核通过';
-  if (status === 'rejected') return '已退回';
-  return '待业务填报';
 }

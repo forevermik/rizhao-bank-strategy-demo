@@ -7,7 +7,6 @@ import type {
   StandardYearProgress,
   StrategicTask,
   TaskProgressSummary,
-  TaskReviewStatus,
   Year,
 } from '../types';
 import { DEMO_DATA_AS_OF_DATE } from '../data/constants';
@@ -195,22 +194,10 @@ export function calculateTaskReportingStatus(task: StrategicTask, departmentId: 
   const standards = getTaskStandards(task.id);
   if (!standards.length) return '暂无完成标准';
   if (!taskLeadDepartmentIds(task).includes(departmentId)) return '仅查看';
-  const reviewStatus = getTaskReviewStatus(task, departmentId, reports, year);
-  if (reviewStatus === 'rejected') return '待更新';
-  if (reviewStatus === 'pending') return '待审核';
-  if (reviewStatus === 'approved') return '审核通过';
+  const departmentReports = cleanReports(reports).filter((report) => report.taskId === task.id && report.departmentId === departmentId && report.year === year);
+  if (departmentReports.some((report) => report.reportStatus === 'completed')) return '已填报';
   if (isTaskOverdueByStandards(task, reports)) return '逾期';
   return '待更新';
-}
-
-export function getTaskReviewStatus(task: StrategicTask, departmentId: string, reports: AnnualStandardReport[], year: Year): TaskReviewStatus {
-  const submitted = cleanReports(reports).filter((report) => report.taskId === task.id && report.departmentId === departmentId && report.year === year);
-  const requiredStandardIds = new Set(getTaskStandards(task.id).map((standard) => standard.id));
-  const submittedStandardIds = new Set(submitted.map((report) => report.standardId));
-  if (!requiredStandardIds.size || [...requiredStandardIds].some((standardId) => !submittedStandardIds.has(standardId))) return 'unsubmitted';
-  if (submitted.some((report) => report.reviewStatus === 'rejected')) return 'rejected';
-  if (submitted.every((report) => report.reviewStatus === 'approved')) return 'approved';
-  return 'pending';
 }
 
 export function isTaskCompletedByStandards(task: StrategicTask, reports: AnnualStandardReport[]) {
@@ -220,7 +207,7 @@ export function isTaskCompletedByStandards(task: StrategicTask, reports: AnnualS
   return standards.every((standard) => leadDepartmentIds.every((departmentId) => {
     const latest = latestReportForStandard(cleanReports(reports), standard.id, [departmentId]);
     const progress = normalizedProgress(calculateMetricProgress(standard, latest, latest?.year));
-    return progress != null && progress >= 100 && latest?.reviewStatus === 'approved';
+    return progress != null && progress >= 100;
   }));
 }
 

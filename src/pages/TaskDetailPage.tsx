@@ -1,21 +1,20 @@
 import { useState } from 'react';
 import { Link, Navigate, useParams, useSearchParams } from 'react-router-dom';
-import { ArrowLeft, CheckCircle2, Info, LockKeyhole, XCircle } from 'lucide-react';
+import { ArrowLeft, Info, LockKeyhole } from 'lucide-react';
 import { EmptyState } from '../components/common/EmptyState';
 import { CURRENT_DEMO_YEAR } from '../data/constants';
 import { useAuth } from '../hooks/useAuth';
 import { useCompletionReports } from '../hooks/useCompletionReports';
 import { useLocalStorage } from '../hooks/useLocalStorage';
 import { useTaskReporting } from '../hooks/useTaskReporting';
-import type { AnnualStandardReport, CompletionStandardItem, Measure, Priority, StrategicTask, TaskReviewStatus, Year } from '../types';
+import type { AnnualStandardReport, CompletionStandardItem, Measure, Priority, StrategicTask, Year } from '../types';
 import { years } from '../utils/taskCalculations';
-import { canViewTask, getTaskLeads, getTaskRelation } from '../utils/taskSelectors';
+import { canViewTask, getTaskRelation } from '../utils/taskSelectors';
 import {
   calculatePlannedFinalGap,
   calculateStandardYearProgress,
   getPlannedTarget,
   getTaskProgressSummary,
-  getTaskReviewStatus,
   getTaskStandards,
   progressExplanation,
   standardTypeLabel,
@@ -31,12 +30,11 @@ export function TaskDetailPage() {
   const [searchParams] = useSearchParams();
   const { user } = useAuth();
   const { tasks, updateTask } = useTaskReporting();
-  const { reports, reviewTaskReports, saveReport } = useCompletionReports();
+  const { reports, saveReport } = useCompletionReports();
   const task = tasks.find((item) => item.id === taskId);
   const initialYear = Number(searchParams.get('year')) as Year;
   const editMode = searchParams.get('mode') === 'edit';
-  const reviewMode = searchParams.get('review') === '1';
-  const [tab, setTab] = useState<Tab>(editMode || reviewMode ? 'standards' : 'overview');
+  const [tab, setTab] = useState<Tab>(editMode ? 'standards' : 'overview');
   const [tableMode, setTableMode] = useState<TableMode>('all');
   const [selectedYear, setSelectedYear] = useState<Year>(years.includes(initialYear) ? initialYear : CURRENT_DEMO_YEAR);
   const [showRule, setShowRule] = useState(false);
@@ -58,7 +56,7 @@ export function TaskDetailPage() {
           <ArrowLeft size={18} /> {user?.role === 'strategy' ? '返回战略任务' : '返回工作台'}
         </Link>
         <button onClick={() => { setTab('standards'); setTableMode('all'); }} className={`inline-flex h-10 items-center gap-2 rounded-xl px-4 text-sm font-bold ${canEdit ? 'bg-brand-500 text-white' : 'border border-[#D9E3F2] bg-[#F8FBFF] text-muted'}`}>
-          {!canEdit && user?.role !== 'strategy' && <LockKeyhole size={15} />}{canEdit ? '填报进度' : user?.role === 'strategy' ? '进入审核' : isLockedForSupport ? '查看进度（只读）' : '查看进度'}
+          {!canEdit && <LockKeyhole size={15} />}{canEdit ? '填报进度' : isLockedForSupport ? '查看进度（只读）' : '查看进度'}
         </button>
       </div>
 
@@ -158,7 +156,6 @@ export function TaskDetailPage() {
           task={task}
           reports={reports}
           saveReport={saveReport}
-          reviewTaskReports={reviewTaskReports}
         />
       )}
     </div>
@@ -177,7 +174,6 @@ function CompletionStandardTable({
   task,
   reports,
   saveReport,
-  reviewTaskReports,
 }: {
   reportingLabel: string;
   canEdit: boolean;
@@ -190,7 +186,6 @@ function CompletionStandardTable({
   task: StrategicTask;
   reports: AnnualStandardReport[];
   saveReport: (report: AnnualStandardReport) => void;
-  reviewTaskReports: (taskId: string, year: Year, departmentId: string, reviewStatus: 'approved' | 'rejected', reviewFeedback?: string) => boolean;
 }) {
   const { user } = useAuth();
   const [targetState, setTargetState] = useLocalStorage<TargetOverrideState>(STANDARD_TARGET_STORAGE_KEY, { targets: {} });
@@ -237,16 +232,6 @@ function CompletionStandardTable({
         </div>
       </div>
       {showRule && <div className="mb-4 rounded-xl border border-[#D9E3F2] bg-white p-3 text-sm leading-6 text-muted">{progressExplanation}</div>}
-
-      <TaskReviewPanel
-        task={task}
-        year={selectedYear}
-        reports={reports}
-        userRole={user?.role}
-        departmentId={departmentId}
-        isLockedForSupport={isLockedForSupport}
-        onReview={reviewTaskReports}
-      />
 
       <div className="completion-table-shell">
         <div className="completion-table-scroll thin-scroll">
@@ -320,113 +305,6 @@ function CompletionStandardTable({
       </div>
     </section>
   );
-}
-
-function TaskReviewPanel({
-  task,
-  year,
-  reports,
-  userRole,
-  departmentId,
-  isLockedForSupport,
-  onReview,
-}: {
-  task: StrategicTask;
-  year: Year;
-  reports: AnnualStandardReport[];
-  userRole?: 'strategy' | 'department';
-  departmentId: string;
-  isLockedForSupport: boolean;
-  onReview: (taskId: string, year: Year, departmentId: string, reviewStatus: 'approved' | 'rejected', reviewFeedback?: string) => boolean;
-}) {
-  const [feedbackByDepartment, setFeedbackByDepartment] = useState<Record<string, string>>({});
-  const [errorDepartmentId, setErrorDepartmentId] = useState('');
-
-  if (isLockedForSupport) {
-    return (
-      <div className="mb-4 flex items-center gap-2 rounded-xl border border-[#D9E3F2] bg-[#F8FBFF] px-4 py-3 text-sm font-semibold text-muted">
-        <LockKeyhole size={16} /> 协同部门为只读状态，可查看牵头部门填报内容和审核状态。
-      </div>
-    );
-  }
-
-  if (userRole === 'strategy') {
-    return (
-      <div className="mb-4 rounded-xl border border-[#D9E3F2] bg-[#F8FBFF] p-4">
-        <div className="font-black text-ink">战略管理部审核与反馈 · {year} 年</div>
-        <p className="mt-1 text-sm text-muted">查看下方填报内容后，对各牵头部门本年度任务进度作出审核结论。</p>
-        <div className="mt-3 space-y-3">
-          {getTaskLeads(task).map((lead) => {
-            const status = getTaskReviewStatus(task, lead.id, reports, year);
-            const submittedReports = reports.filter((report) => report.taskId === task.id && report.year === year && report.departmentId === lead.id && report.reportStatus === 'completed');
-            const requiredCount = getTaskStandards(task.id).length;
-            const submittedCount = new Set(submittedReports.map((report) => report.standardId)).size;
-            const previousFeedback = submittedReports.find((report) => report.reviewFeedback)?.reviewFeedback ?? '';
-            const feedback = feedbackByDepartment[lead.id] ?? previousFeedback;
-            const hasSubmission = status !== 'unsubmitted';
-            return (
-              <div key={lead.id} className="rounded-xl border border-[#E4EBF5] bg-white p-3">
-                <div className="flex items-center justify-between gap-3">
-                  <div className="font-bold text-ink">{lead.name}</div>
-                  <ReviewStatusBadge status={status} />
-                </div>
-                {hasSubmission ? (
-                  <>
-                    <textarea
-                      className="mt-3 min-h-20 w-full rounded-xl border border-[#D9E3F2] px-3 py-2 text-sm leading-6 outline-none focus:border-brand-500"
-                      value={feedback}
-                      onChange={(event) => {
-                        setFeedbackByDepartment((current) => ({ ...current, [lead.id]: event.target.value }));
-                        setErrorDepartmentId('');
-                      }}
-                      placeholder="审核不通过时，请填写具体整改意见"
-                    />
-                    {errorDepartmentId === lead.id && <div className="mt-1 text-xs font-bold text-[#D92D20]">审核不通过时必须填写反馈内容。</div>}
-                    <div className="mt-3 flex justify-end gap-2">
-                      <button type="button" onClick={() => {
-                        onReview(task.id, year, lead.id, 'approved');
-                        setFeedbackByDepartment((current) => ({ ...current, [lead.id]: '' }));
-                        setErrorDepartmentId('');
-                      }} className="inline-flex h-9 items-center gap-1 rounded-xl bg-[#ECFDF3] px-4 text-sm font-bold text-[#027A48]">
-                        <CheckCircle2 size={16} /> 通过
-                      </button>
-                      <button type="button" onClick={() => {
-                        if (!onReview(task.id, year, lead.id, 'rejected', feedback)) {
-                          setErrorDepartmentId(lead.id);
-                          return;
-                        }
-                        setErrorDepartmentId('');
-                      }} className="inline-flex h-9 items-center gap-1 rounded-xl bg-[#FEF3F2] px-4 text-sm font-bold text-[#B42318]">
-                        <XCircle size={16} /> 不通过
-                      </button>
-                    </div>
-                  </>
-                ) : (
-                  <div className="mt-2 text-sm text-muted">该牵头部门尚未完整提交本年度进度（{submittedCount}/{requiredCount} 项）。</div>
-                )}
-              </div>
-            );
-          })}
-        </div>
-      </div>
-    );
-  }
-
-  const status = getTaskReviewStatus(task, departmentId, reports, year);
-  const departmentReports = reports.filter((report) => report.taskId === task.id && report.year === year && report.departmentId === departmentId && report.reportStatus === 'completed');
-  const submittedCount = new Set(departmentReports.map((report) => report.standardId)).size;
-  const requiredCount = getTaskStandards(task.id).length;
-  const feedback = departmentReports.find((report) => report.reviewFeedback)?.reviewFeedback ?? '';
-  if (status === 'unsubmitted') return <div className="mb-4 rounded-xl bg-brand-50 px-4 py-3 text-sm font-semibold text-brand-500">已保存 {submittedCount}/{requiredCount} 项完成标准；全部保存后将自动提交战略管理部审核。</div>;
-  if (status === 'approved') return <div className="mb-4 flex items-center gap-2 rounded-xl bg-[#ECFDF3] px-4 py-3 text-sm font-bold text-[#027A48]"><CheckCircle2 size={16} /> 战略管理部审核通过</div>;
-  if (status === 'rejected') return <div className="mb-4 rounded-xl border border-[#FDA29B] bg-[#FEF3F2] px-4 py-3 text-sm text-[#B42318]"><div className="flex items-center gap-2 font-black"><XCircle size={16} /> 审核不通过，请整改后重新保存</div><div className="mt-2 whitespace-pre-wrap leading-6">反馈：{feedback}</div></div>;
-  return <div className="mb-4 rounded-xl bg-[#EFF8FF] px-4 py-3 text-sm font-semibold text-[#175CD3]">已提交战略管理部，等待审核。{feedback ? ` 上次退回意见：${feedback}` : ''}</div>;
-}
-
-function ReviewStatusBadge({ status }: { status: TaskReviewStatus }) {
-  const label = status === 'approved' ? '已通过' : status === 'rejected' ? '不通过' : status === 'pending' ? '待审核' : '未提交';
-  const tone = status === 'approved' ? 'bg-[#ECFDF3] text-[#027A48]' : status === 'rejected' ? 'bg-[#FEF3F2] text-[#B42318]' : status === 'pending' ? 'bg-[#EFF8FF] text-[#175CD3]' : 'bg-[#F2F4F7] text-muted';
-  return <span className={`rounded-full px-3 py-1 text-xs font-black ${tone}`}>{label}</span>;
 }
 
 function YearCols() {
