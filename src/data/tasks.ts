@@ -5383,9 +5383,9 @@ export const tasks: StrategicTask[] = [
       "场景金融运营中心"
     ],
     "priority": "",
-    "period": "",
-    "startDate": "",
-    "endDate": "",
+    "period": "2026—2030",
+    "startDate": "2026-01-01",
+    "endDate": "2030-12-31",
     "measures": [
       {
         "id": "rz2026-ls-09-m1",
