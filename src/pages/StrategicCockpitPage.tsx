@@ -9,40 +9,23 @@ import {
   ResponsiveContainer,
   Tooltip,
 } from 'recharts';
-import { Activity, Building2, ClockAlert, Database, Layers3, ListChecks, Target } from 'lucide-react';
+import { Building2, Database, ListChecks, Target } from 'lucide-react';
 import { dashboardSeed } from '../data/dashboard';
 import { indicators } from '../data/indicators';
 import { DEMO_DATA_AS_OF_DATE } from '../data/constants';
 import { ChartFrame } from '../components/charts/ChartFrame';
 import { StatCard } from '../components/common/StatCard';
-import { useCompletionReports } from '../hooks/useCompletionReports';
 import { useTaskReporting } from '../hooks/useTaskReporting';
-import type { Year } from '../types';
-import {
-  years,
-} from '../utils/taskCalculations';
-import {
-  calculateStandardYearProgress,
-  getTaskStandards,
-  isStandardApplicableToYear,
-  isTaskOverdueByStandards,
-} from '../utils/progressCalculations';
 
 const palette = ['#155EEF', '#06AED4', '#12B76A', '#F79009', '#2E90FA', '#7A5AF8', '#0E9384', '#667085'];
 
 export function StrategicCockpitPage() {
   const { tasks } = useTaskReporting();
-  const { reports } = useCompletionReports();
-  const [year, setYear] = useState<Year>(2026);
   const [area, setArea] = useState('全部板块');
   const [activeSummary, setActiveSummary] = useState<'departments' | 'systems' | null>(null);
   const areas = ['全部板块', ...Array.from(new Set(tasks.map((task) => task.businessArea)))];
 
   const filtered = useMemo(() => tasks.filter((task) => area === '全部板块' || task.businessArea === area), [area, tasks]);
-  const yearStandards = filtered.flatMap((task) => getTaskStandards(task.id).filter((standard) => isStandardApplicableToYear(standard, year, task)));
-  const yearProgressValues = filtered.map((task) => calculateStandardYearProgress(task, year, reports)).filter((value): value is number => value != null);
-  const yearProgress = yearProgressValues.length ? Math.round(yearProgressValues.reduce((sum, value) => sum + value, 0) / yearProgressValues.length) : null;
-  const overdueTasks = filtered.filter((task) => isTaskOverdueByStandards(task, reports));
 
   const areaDistribution = Array.from(new Set(filtered.map((task) => task.businessArea))).map((name) => ({
     name,
@@ -55,7 +38,6 @@ export function StrategicCockpitPage() {
       id: departmentId,
       name,
       count: ownedTasks.length,
-      overdueCount: ownedTasks.filter((task) => isTaskOverdueByStandards(task, reports)).length,
     };
   });
 
@@ -73,27 +55,15 @@ export function StrategicCockpitPage() {
         </div>
         <div className="flex items-center gap-3">
           <div className="rounded-full bg-[#FFF7ED] px-4 py-2 text-sm font-bold text-[#B54708]">数据截止日期：{DEMO_DATA_AS_OF_DATE}</div>
-          <select className="h-11 rounded-ui border border-[#D9E3F2] bg-white px-4" value={year} onChange={(event) => setYear(Number(event.target.value) as Year)}>
-            {years.map((item) => <option key={item} value={item}>{item}</option>)}
-          </select>
           <select className="h-11 rounded-ui border border-[#D9E3F2] bg-white px-4" value={area} onChange={(event) => setArea(event.target.value)}>
             {areas.map((item) => <option key={item}>{item}</option>)}
           </select>
         </div>
       </div>
 
-      <div className="grid grid-cols-4 gap-4 2xl:grid-cols-7">
+      <div className="grid grid-cols-4 gap-4">
         <Link to="/tasks" className="block focus:outline-none focus:ring-2 focus:ring-brand-500">
           <StatCard label="战略任务总数" value={filtered.length} icon={ListChecks} actionLabel="进入战略任务" />
-        </Link>
-        <Link to={`/annual?year=${year}&overdue=1`} className="block focus:outline-none focus:ring-2 focus:ring-brand-500" title="截止数据日期，完成标准计划时间已到且尚未达成的任务，即计为逾期任务。">
-          <StatCard label="逾期任务" value={overdueTasks.length} icon={ClockAlert} tone="amber" actionLabel="查看逾期任务" />
-        </Link>
-        <Link to={`/annual?year=${year}`} className="block focus:outline-none focus:ring-2 focus:ring-brand-500">
-          <StatCard label={`${year} 年度填报项`} value={yearStandards.length} icon={Layers3} tone="cyan" actionLabel="进入年度推进" />
-        </Link>
-        <Link to={`/annual?year=${year}`} className="block focus:outline-none focus:ring-2 focus:ring-brand-500">
-          <StatCard label={`${year} 年度进度`} value={yearProgress == null ? '—' : yearProgress} suffix={yearProgress == null ? '' : '%'} icon={Activity} tone="blue" actionLabel="进入年度推进" />
         </Link>
         <button type="button" onClick={() => openSummary('departments')} className="block text-left focus:outline-none focus:ring-2 focus:ring-brand-500">
           <StatCard label="牵头部门数" value={leadDepartments.length} icon={Building2} tone="cyan" actionLabel="查看部门明细" />
@@ -117,7 +87,7 @@ export function StrategicCockpitPage() {
               {leadDepartments.map((item) => (
                 <Link key={item.id} to={`/tasks?lead=${item.id}`} className="rounded-xl bg-[#F8FBFF] p-4 text-sm transition hover:bg-brand-50">
                   <div className="font-black text-ink">{item.name}</div>
-                  <div className="mt-2 text-muted">牵头任务 {item.count} 项 · 逾期任务 {item.overdueCount} 项</div>
+                  <div className="mt-2 text-muted">牵头任务 {item.count} 项</div>
                 </Link>
               ))}
             </div>

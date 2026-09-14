@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import type { LucideIcon } from 'lucide-react';
-import { CalendarDays, ChevronRight, ClipboardList, Database, Edit3, Home, LockKeyhole, LogOut, Search, Target, UserRound } from 'lucide-react';
+import { ChevronRight, ClipboardList, Database, Edit3, Home, LockKeyhole, LogOut, Search, Target, UserRound } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { LogoMark } from '../components/common/LogoMark';
 import { AiAssistant } from '../components/ai-assistant/AiAssistant';
@@ -8,25 +8,17 @@ import { dashboardSeed } from '../data/dashboard';
 import { indicators } from '../data/indicators';
 import { CURRENT_DEMO_YEAR, DEMO_DATA_AS_OF_DATE } from '../data/constants';
 import { useAuth } from '../hooks/useAuth';
-import { useCompletionReports } from '../hooks/useCompletionReports';
+import { useQuarterlyReports } from '../hooks/useQuarterlyReports';
 import { useTaskReporting } from '../hooks/useTaskReporting';
 import type { StrategicTask, Year } from '../types';
 import {
   years,
 } from '../utils/taskCalculations';
-import {
-  calculateMetricProgress,
-  calculateStandardOverallProgress,
-  calculateStandardYearProgress,
-  getStandardReport,
-  getTaskStandards,
-  isStandardApplicableToYear,
-  isTaskOverdueByStandards,
-} from '../utils/progressCalculations';
+import { calculateTaskOverallQuarterProgress, calculateTaskYearQuarterProgress } from '../utils/quarterlyProgress';
 import { getLeadTasks, getSupportTasks, getTaskRelation, getVisibleTasks } from '../utils/taskSelectors';
 import { indicatorValue, isIndicatorAchieved, isIndicatorFilled } from '../utils/indicatorCalculations';
 
-type MiniTab = 'cockpit' | 'tasks' | 'workbench' | 'annual' | 'indicators';
+type MiniTab = 'cockpit' | 'tasks' | 'workbench' | 'indicators';
 type Sheet = 'departments' | 'systems' | null;
 
 export function MiniProgramPage() {
@@ -94,7 +86,7 @@ export function MiniProgramPage() {
 function MiniAuthenticatedApp({ logout }: { logout: () => void }) {
   const { user } = useAuth();
   const { tasks } = useTaskReporting();
-  const { reports } = useCompletionReports();
+  const { reports } = useQuarterlyReports();
   const isStrategy = user?.role === 'strategy';
   const [tab, setTab] = useState<MiniTab>(isStrategy ? 'cockpit' : 'workbench');
   const [sheet, setSheet] = useState<Sheet>(null);
@@ -106,18 +98,10 @@ function MiniAuthenticatedApp({ logout }: { logout: () => void }) {
   }, [isStrategy]);
 
   const visibleTasks = useMemo(() => getVisibleTasks(tasks, user), [tasks, user]);
-  const currentYearStandards = visibleTasks.flatMap((task) => getTaskStandards(task.id).filter((standard) => isStandardApplicableToYear(standard, year, task)));
-  const yearProgressValues = visibleTasks.map((task) => calculateStandardYearProgress(task, year, reports)).filter((value): value is number => value != null);
-  const yearProgress = yearProgressValues.length ? Math.round(yearProgressValues.reduce((sum, value) => sum + value, 0) / yearProgressValues.length) : null;
-  const overdueTasks = visibleTasks.filter((task) => isTaskOverdueByStandards(task, reports));
   const leadTasks = getLeadTasks(visibleTasks, user?.departmentId);
   const supportTasks = getSupportTasks(visibleTasks, user?.departmentId);
   const filteredTasks = visibleTasks
-    .filter((task) => !query.trim() || `${task.code}${task.title}${task.leadDepartmentName}`.includes(query.trim()))
-    .sort((a, b) => Number(isTaskOverdueByStandards(b, reports)) - Number(isTaskOverdueByStandards(a, reports)));
-  const annualRows = visibleTasks
-    .flatMap((task) => getTaskStandards(task.id).filter((standard) => isStandardApplicableToYear(standard, year, task)).map((standard) => ({ task, standard, relation: getTaskRelation(task, user?.departmentId) })));
-  const visibleAnnualRows = annualRows.slice(0, 30);
+    .filter((task) => !query.trim() || `${task.code}${task.title}${task.leadDepartmentName}`.includes(query.trim()));
   const visibleIndicators = user?.role === 'strategy' ? indicators : indicators.filter((indicator) => indicator.departmentId === user?.departmentId);
   const filledIndicators = visibleIndicators.filter((indicator) => isIndicatorFilled(indicator, year)).length;
   const achievedIndicators = visibleIndicators.filter((indicator) => isIndicatorAchieved(indicator, year)).length;
@@ -156,8 +140,6 @@ function MiniAuthenticatedApp({ logout }: { logout: () => void }) {
               </section>
               <div className="grid grid-cols-2 gap-3">
                 <MiniMetric title="战略任务总数" value={tasks.length} onClick={() => setTab('tasks')} />
-                <MiniMetric title="逾期任务" value={overdueTasks.length} onClick={() => setTab('annual')} />
-                <MiniMetric title={`${year} 年度进度`} value={yearProgress == null ? '—' : `${yearProgress}%`} onClick={() => setTab('annual')} />
                 <MiniMetric title="牵头部门数" value={leadDepartments.length} onClick={() => setSheet('departments')} />
                 <MiniMetric title="系统建设事项" value={dashboardSeed.systemProjects.length} onClick={() => setSheet('systems')} />
               </div>
@@ -172,10 +154,9 @@ function MiniAuthenticatedApp({ logout }: { logout: () => void }) {
                 <div className="mt-2 text-3xl font-black">{visibleTasks.length}</div>
                 <div className="mt-1 text-sm text-white/80">本部门相关任务</div>
               </section>
-              <div className="grid grid-cols-3 gap-2">
+              <div className="grid grid-cols-2 gap-2">
                 <MiniCounter label="我牵头" value={leadTasks.length} />
                 <MiniCounter label="我协同" value={supportTasks.length} />
-                <MiniCounter label="逾期任务" value={overdueTasks.length} tone="orange" />
               </div>
               <SearchBox query={query} setQuery={setQuery} />
               <div className="space-y-3">
@@ -187,56 +168,13 @@ function MiniAuthenticatedApp({ logout }: { logout: () => void }) {
           {tab === 'tasks' && isStrategy && (
             <div className="space-y-4">
               <SearchBox query={query} setQuery={setQuery} />
-              <div className="grid grid-cols-3 gap-2">
+              <div className="grid grid-cols-2 gap-2">
                 <MiniCounter label="任务总数" value={tasks.length} />
                 <MiniCounter label="筛选结果" value={filteredTasks.length} />
-                <MiniCounter label="逾期任务" value={overdueTasks.length} tone="orange" />
               </div>
               <div className="space-y-3">
                 {filteredTasks.slice(0, 20).map((task) => <MobileTaskCard key={task.id} task={task} year={year} canEdit={false} reports={reports} />)}
               </div>
-            </div>
-          )}
-
-          {tab === 'annual' && (
-            <div className="space-y-4">
-              <YearPicker year={year} setYear={setYear} />
-              <div className="grid grid-cols-4 gap-2">
-                <MiniCounter label="填报项" value={currentYearStandards.length} />
-                <MiniCounter label="已达成" value={annualRows.filter(({ task, standard }) => {
-                  const departmentId = user?.role === 'department' ? user.departmentId! : task.leadDepartmentId;
-                  const progress = calculateMetricProgress(standard, getStandardReport(reports, standard.id, year, departmentId), year);
-                  return progress != null && progress >= 100;
-                }).length} />
-                <MiniCounter label="逾期" value={annualRows.filter(({ task, standard }) => {
-                  const departmentId = user?.role === 'department' ? user.departmentId! : task.leadDepartmentId;
-                  const progress = calculateMetricProgress(standard, getStandardReport(reports, standard.id, year, departmentId), year);
-                  return !!standard.finalTargetDate && standard.finalTargetDate < DEMO_DATA_AS_OF_DATE && (progress == null || progress < 100);
-                }).length} tone="orange" />
-                <MiniCounter label="进度" value={yearProgress == null ? '—' : `${yearProgress}%`} />
-              </div>
-              <section className="rounded-[18px] bg-white shadow-sm">
-                <div className="border-b border-[#E4EBF5] px-4 py-3 font-black">年度推进列表</div>
-                <div className="divide-y divide-[#E4EBF5]">
-                  {visibleAnnualRows.map(({ task, standard, relation }) => {
-                    const departmentId = user?.role === 'department' ? user.departmentId! : task.leadDepartmentId;
-                    const progress = calculateStandardYearProgress(task, year, reports);
-                    const overdue = !!standard.finalTargetDate && standard.finalTargetDate < DEMO_DATA_AS_OF_DATE && (progress == null || progress < 100);
-                    return (
-                    <div key={standard.id} className="p-4">
-                      <div className="flex items-center justify-between gap-2">
-                        <div className="truncate text-sm font-black">{task.code} · {task.title}</div>
-                        <span className={`shrink-0 rounded-full px-2 py-1 text-xs font-bold ${overdue ? 'bg-[#FFF7ED] text-[#B54708]' : 'bg-brand-50 text-brand-500'}`}>{overdue ? '逾期' : progress == null ? '—' : `${progress}%`}</span>
-                      </div>
-                      <div className="mt-2 text-sm text-muted">{standard.name || standard.sourceText}</div>
-                      <div className="mt-2 flex items-center justify-between text-xs text-muted">
-                        <span>{user?.role === 'department' ? (relation === 'lead' ? '牵头填报' : '协同查看') : task.leadDepartmentName}</span>
-                        <span>{standard.finalTargetDate || '—'}</span>
-                      </div>
-                    </div>
-                  );})}
-                </div>
-              </section>
             </div>
           )}
 
@@ -292,17 +230,15 @@ function MiniBottomNav({ tab, setTab, isStrategy }: { tab: MiniTab; setTab: (tab
     ? [
         { key: 'cockpit', label: '驾驶舱', icon: Home },
         { key: 'tasks', label: '战略任务', icon: ClipboardList },
-        { key: 'annual', label: '年度推进', icon: CalendarDays },
         { key: 'indicators', label: '指标任务', icon: Target },
       ]
     : [
         { key: 'workbench', label: '工作台', icon: Home },
-        { key: 'annual', label: '年度推进', icon: CalendarDays },
         { key: 'indicators', label: '指标任务', icon: Target },
       ];
 
   return (
-    <nav className={`fixed bottom-0 left-1/2 z-30 grid w-full max-w-[430px] -translate-x-1/2 border-t border-[#D9E3F2] bg-white pb-3 pt-2 ${isStrategy ? 'grid-cols-4' : 'grid-cols-3'}`}>
+    <nav className={`fixed bottom-0 left-1/2 z-30 grid w-full max-w-[430px] -translate-x-1/2 border-t border-[#D9E3F2] bg-white pb-3 pt-2 ${isStrategy ? 'grid-cols-3' : 'grid-cols-2'}`}>
       {items.map((item) => <MiniTabButton key={item.key} active={tab === item.key} icon={item.icon} label={item.label} onClick={() => setTab(item.key)} />)}
     </nav>
   );
@@ -369,9 +305,9 @@ function BusinessAreaList({ tasks }: { tasks: StrategicTask[] }) {
   );
 }
 
-function MobileTaskCard({ task, year, canEdit, departmentId, reports }: { task: StrategicTask; year: Year; canEdit: boolean; departmentId?: string; reports: ReturnType<typeof useCompletionReports>['reports'] }) {
-  const progress = task.yearlyPlans.find((plan) => plan.year === year)?.progress || null;
-  const overallProgress = task.overallProgress || null;
+function MobileTaskCard({ task, year, canEdit, departmentId, reports }: { task: StrategicTask; year: Year; canEdit: boolean; departmentId?: string; reports: ReturnType<typeof useQuarterlyReports>['reports'] }) {
+  const progress = calculateTaskYearQuarterProgress(task, year, reports, canEdit ? departmentId : undefined);
+  const overallProgress = calculateTaskOverallQuarterProgress(task, reports);
   const relationType = getTaskRelation(task, departmentId);
   const relation = departmentId ? (relationType === 'lead' ? '我牵头' : '我协同') : task.leadDepartmentName;
   const isLockedForSupport = relationType === 'support';
@@ -386,7 +322,7 @@ function MobileTaskCard({ task, year, canEdit, departmentId, reports }: { task: 
       <div className="mt-3 grid grid-cols-3 gap-2 text-xs">
         <span className="rounded-lg bg-[#F8FBFF] px-2 py-2">牵头<br /><b>{task.leadDepartmentName}</b></span>
         <span className="rounded-lg bg-[#F8FBFF] px-2 py-2">总体进度<br /><b>{overallProgress == null ? '—' : `${overallProgress}%`}</b></span>
-        <span className="rounded-lg bg-[#F8FBFF] px-2 py-2">年度进度<br /><b>{progress == null ? '—' : `${progress}%`}</b></span>
+        <span className="rounded-lg bg-[#F8FBFF] px-2 py-2">{year}填报<br /><b>{progress == null ? '—' : `${progress}%`}</b></span>
       </div>
       <div className="mt-3 flex justify-end gap-2">
         <Link to={`/tasks/${task.id}`} className="inline-flex h-8 items-center rounded-xl border border-[#D9E3F2] bg-white px-3 text-xs font-bold text-brand-500">

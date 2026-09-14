@@ -5,25 +5,19 @@ import { EmptyState } from '../components/common/EmptyState';
 import { TaskCard } from '../components/task/TaskCard';
 import { CURRENT_DEMO_YEAR } from '../data/constants';
 import { useAuth } from '../hooks/useAuth';
-import { useCompletionReports } from '../hooks/useCompletionReports';
+import { useQuarterlyReports } from '../hooks/useQuarterlyReports';
 import { useTaskReporting } from '../hooks/useTaskReporting';
 import type { StrategicTask, Year } from '../types';
 import { years } from '../utils/taskCalculations';
 import { getLeadTasks, getSupportTasks, getTaskRelation, getVisibleTasks } from '../utils/taskSelectors';
-import {
-  calculateStandardOverallProgress,
-  calculateStandardYearProgress,
-  calculateTaskReportingStatus,
-  isTaskCompletedByStandards,
-  isTaskOverdueByStandards,
-} from '../utils/progressCalculations';
+import { calculateQuarterlyReportingStatus, calculateTaskOverallQuarterProgress, calculateTaskYearQuarterProgress, isTaskQuarterlyCompleted } from '../utils/quarterlyProgress';
 
-type WorkbenchTab = 'pending' | 'reported' | 'overdue' | 'all' | 'lead' | 'support';
+type WorkbenchTab = 'pending' | 'reported' | 'all' | 'lead' | 'support';
 
 export function DepartmentWorkbenchPage() {
   const { user } = useAuth();
   const { tasks } = useTaskReporting();
-  const { reports } = useCompletionReports();
+  const { reports } = useQuarterlyReports();
   const [searchParams] = useSearchParams();
   const [tab, setTab] = useState<WorkbenchTab>(searchParams.get('view') === 'tasks' ? 'all' : 'pending');
   const [view, setView] = useState<'card' | 'table'>('card');
@@ -35,14 +29,13 @@ export function DepartmentWorkbenchPage() {
   const visibleTasks = useMemo(() => getVisibleTasks(tasks, user), [tasks, user]);
   const leadTasks = useMemo(() => getLeadTasks(visibleTasks, user?.departmentId), [user?.departmentId, visibleTasks]);
   const supportTasks = useMemo(() => getSupportTasks(visibleTasks, user?.departmentId), [user?.departmentId, visibleTasks]);
-  const pendingTasks = leadTasks.filter((task) => calculateTaskReportingStatus(task, user?.departmentId, reports, year) === '待更新');
-  const reportedTasks = leadTasks.filter((task) => calculateTaskReportingStatus(task, user?.departmentId, reports, year) === '已填报');
-  const overdueTasks = visibleTasks.filter((task) => isTaskOverdueByStandards(task, reports));
+  const pendingTasks = leadTasks.filter((task) => calculateQuarterlyReportingStatus(task, user?.departmentId, reports, year) === '待更新');
+  const reportedTasks = leadTasks.filter((task) => calculateQuarterlyReportingStatus(task, user?.departmentId, reports, year) === '已填报');
 
-  const tabTasks = tab === 'lead' ? leadTasks : tab === 'support' ? supportTasks : tab === 'pending' ? pendingTasks : tab === 'reported' ? reportedTasks : tab === 'overdue' ? overdueTasks : visibleTasks;
+  const tabTasks = tab === 'lead' ? leadTasks : tab === 'support' ? supportTasks : tab === 'pending' ? pendingTasks : tab === 'reported' ? reportedTasks : visibleTasks;
   const filteredTasks = tabTasks
     .filter((task) => {
-      const reportingStatus = calculateTaskReportingStatus(task, user?.departmentId, reports, year);
+      const reportingStatus = calculateQuarterlyReportingStatus(task, user?.departmentId, reports, year);
       const statusOk = status === '全部状态' || reportingStatus === status;
       const priorityOk = priority === '全部优先级' || task.priority === priority;
       const q = query.trim();
@@ -65,11 +58,10 @@ export function DepartmentWorkbenchPage() {
             <h2 className="mt-1 text-3xl font-black text-ink">{user?.departmentName}</h2>
             <p className="mt-2 text-sm text-muted">牵头任务在线填报并直接保存，协同任务仅可查看。</p>
           </div>
-          <div className="grid grid-cols-4 gap-3">
+          <div className="grid grid-cols-3 gap-3">
             <MiniStat label="我牵头" value={leadTasks.length} />
             <MiniStat label="我协同" value={supportTasks.length} />
-            <MiniStat label="进度待更新" value={pendingTasks.length} />
-            <MiniStat label="逾期任务" value={overdueTasks.length} tone="orange" />
+            <MiniStat label="季度待填报" value={pendingTasks.length} />
           </div>
         </div>
       </section>
@@ -77,9 +69,8 @@ export function DepartmentWorkbenchPage() {
       <section className="soft-panel rounded-ui p-4">
         <div className="flex flex-wrap items-center gap-3">
           {[
-            ['pending', `进度待更新 ${pendingTasks.length}`],
-            ['reported', `已填报 ${reportedTasks.length}`],
-            ['overdue', `逾期 ${overdueTasks.length}`],
+            ['pending', `季度待填报 ${pendingTasks.length}`],
+            ['reported', `已有季度填报 ${reportedTasks.length}`],
             ['all', `全部相关 ${visibleTasks.length}`],
             ['lead', `我牵头 ${leadTasks.length}`],
             ['support', `我协同 ${supportTasks.length}`],
@@ -101,7 +92,7 @@ export function DepartmentWorkbenchPage() {
               {years.map((item) => <option key={item}>{item}</option>)}
             </select>
             <select className="h-10 rounded-xl border border-[#D9E3F2] bg-white px-3" value={status} onChange={(event) => setStatus(event.target.value)}>
-              {['全部状态', '待更新', '已填报', '逾期', '仅查看', '暂无完成标准'].map((item) => <option key={item}>{item}</option>)}
+              {['全部状态', '待更新', '已填报', '仅查看'].map((item) => <option key={item}>{item}</option>)}
             </select>
             <select className="h-10 rounded-xl border border-[#D9E3F2] bg-white px-3" value={priority} onChange={(event) => setPriority(event.target.value)}>
               {['全部优先级', '高', '中', '低', ''].map((item) => <option key={item} value={item}>{item || '—'}</option>)}
@@ -136,21 +127,21 @@ function MiniStat({ label, value, tone = 'blue' }: { label: string; value: numbe
   );
 }
 
-function TaskTable({ tasks, year, departmentId, reports }: { tasks: StrategicTask[]; year: Year; departmentId?: string; reports: ReturnType<typeof useCompletionReports>['reports'] }) {
+function TaskTable({ tasks, year, departmentId, reports }: { tasks: StrategicTask[]; year: Year; departmentId?: string; reports: ReturnType<typeof useQuarterlyReports>['reports'] }) {
   return (
     <div className="soft-panel overflow-hidden rounded-ui">
       <table className="w-full border-collapse text-left text-sm">
         <thead className="bg-[#F6F9FE] text-muted">
           <tr>
-            {['关系', '编号', '任务名称', '牵头部门', '年度进度', '总体进度', '状态', '操作'].map((head) => <th key={head} className="px-4 py-3 font-bold">{head}</th>)}
+            {['关系', '编号', '任务名称', '牵头部门', `${year}填报完成`, '整体进度', '状态', '操作'].map((head) => <th key={head} className="px-4 py-3 font-bold">{head}</th>)}
           </tr>
         </thead>
         <tbody>
           {tasks.map((task) => {
             const relation = getTaskRelation(task, departmentId);
-            const yearProgress = calculateStandardYearProgress(task, year, reports);
-            const overallProgress = calculateStandardOverallProgress(task, reports);
-            const status = calculateTaskReportingStatus(task, departmentId, reports, year);
+            const yearProgress = calculateTaskYearQuarterProgress(task, year, reports, relation === 'lead' ? departmentId : undefined);
+            const overallProgress = calculateTaskOverallQuarterProgress(task, reports);
+            const status = calculateQuarterlyReportingStatus(task, departmentId, reports, year);
             return (
               <tr key={task.id} className="border-t border-[#E4EBF5] hover:bg-brand-50/50">
                 <td className="px-4 py-3">{relation === 'lead' ? '我牵头' : '我协同'}</td>
@@ -179,11 +170,10 @@ function TaskTable({ tasks, year, departmentId, reports }: { tasks: StrategicTas
   );
 }
 
-function taskSortWeight(task: StrategicTask, reports: ReturnType<typeof useCompletionReports>['reports'], departmentId: string | undefined, year: Year) {
-  if (isTaskOverdueByStandards(task, reports)) return 1;
-  const status = calculateTaskReportingStatus(task, departmentId, reports, year);
+function taskSortWeight(task: StrategicTask, reports: ReturnType<typeof useQuarterlyReports>['reports'], departmentId: string | undefined, year: Year) {
+  const status = calculateQuarterlyReportingStatus(task, departmentId, reports, year);
   if (status === '待更新') return 2;
-  if (status === '已填报' && !isTaskCompletedByStandards(task, reports)) return 3;
-  if (isTaskCompletedByStandards(task, reports)) return 4;
+  if (status === '已填报' && !isTaskQuarterlyCompleted(task, reports)) return 3;
+  if (isTaskQuarterlyCompleted(task, reports)) return 4;
   return 5;
 }

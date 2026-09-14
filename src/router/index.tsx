@@ -5,7 +5,6 @@ import { StrategicCockpitPage } from '../pages/StrategicCockpitPage';
 import { DepartmentWorkbenchPage } from '../pages/DepartmentWorkbenchPage';
 import { TaskListPage } from '../pages/TaskListPage';
 import { TaskDetailPage } from '../pages/TaskDetailPage';
-import { AnnualProgressPage } from '../pages/AnnualProgressPage';
 import { IndicatorListPage } from '../pages/IndicatorListPage';
 import { IndicatorDetailPage } from '../pages/IndicatorDetailPage';
 import { MiniProgramPage } from '../pages/MiniProgramPage';
@@ -60,7 +59,6 @@ export const router = createBrowserRouter([
       { path: 'workbench', element: <DepartmentOnly><DepartmentWorkbenchPage /></DepartmentOnly> },
       { path: 'tasks', element: <TasksEntry /> },
       { path: 'tasks/:taskId', element: <TaskDetailPage /> },
-      { path: 'annual', element: <AnnualProgressPage /> },
       { path: 'indicators', element: <IndicatorListPage /> },
       { path: 'indicators/:indicatorId', element: <IndicatorDetailPage /> },
       { path: 'overview', element: <OverviewRedirect /> },

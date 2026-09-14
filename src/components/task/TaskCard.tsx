@@ -1,21 +1,15 @@
-import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Edit3, Info, LockKeyhole } from 'lucide-react';
+import { Edit3, LockKeyhole } from 'lucide-react';
 import type { StrategicTask, Year } from '../../types';
 import { useAuth } from '../../hooks/useAuth';
-import { useCompletionReports } from '../../hooks/useCompletionReports';
+import { useQuarterlyReports } from '../../hooks/useQuarterlyReports';
 import { getTaskImplementationYears } from '../../utils/taskCalculations';
-import {
-  calculateStandardYearProgress,
-  getTaskProgressSummary,
-  progressExplanation,
-} from '../../utils/progressCalculations';
+import { calculateTaskOverallQuarterProgress, calculateTaskYearQuarterProgress } from '../../utils/quarterlyProgress';
 
 export function TaskCard({ task, relation, year = 2026 }: { task: StrategicTask; relation?: 'lead' | 'support' | 'none'; year?: Year }) {
   const { user } = useAuth();
-  const { reports } = useCompletionReports();
-  const [showRule, setShowRule] = useState(false);
-  const summary = getTaskProgressSummary(task, reports, year);
+  const { reports } = useQuarterlyReports();
+  const overallProgress = calculateTaskOverallQuarterProgress(task, reports);
   const relationLabel = relation === 'lead' ? '我牵头' : relation === 'support' ? '我协同' : '';
   const canReport = user?.role === 'department' && relation === 'lead';
   const isLockedForSupport = user?.role === 'department' && relation === 'support';
@@ -44,36 +38,26 @@ export function TaskCard({ task, relation, year = 2026 }: { task: StrategicTask;
         <MiniInfo label="实施时间" value={task.period || '—'} />
       </div>
 
-      <div className="relative mt-2.5">
+      <div className="mt-2.5">
         <div className="mb-1.5 flex justify-between text-xs text-muted">
-          <span className="inline-flex items-center gap-1">
-            总体进度
-            <button type="button" onClick={() => setShowRule((value) => !value)} className="grid h-5 w-5 place-items-center rounded-full hover:bg-brand-50" aria-label="查看计算口径">
-              <Info size={13} />
-            </button>
-          </span>
-          <span className="font-bold text-brand-500">{summary.displayProgress == null ? '—' : `${summary.displayProgress}%`}</span>
+          <span>整体进度</span>
+          <span className="font-bold text-brand-500">{overallProgress == null ? '—' : `${overallProgress}%`}</span>
         </div>
-        {showRule && (
-          <div className="absolute left-0 top-6 z-10 w-72 rounded-xl border border-[#D9E3F2] bg-white p-3 text-xs leading-5 text-muted shadow-lg">
-            {summary.explanation || progressExplanation}
-          </div>
-        )}
         <div className="h-1.5 overflow-hidden rounded-full bg-[#E4EBF5]">
-          <div className="h-full rounded-full bg-gradient-to-r from-brand-500 to-cyanx" style={{ width: `${summary.displayProgress ?? 0}%` }} />
+          <div className="h-full rounded-full bg-gradient-to-r from-brand-500 to-cyanx" style={{ width: `${overallProgress ?? 0}%` }} />
         </div>
       </div>
 
       {implementationYears.length > 0 && <div className="mt-2.5 grid gap-1" style={{ gridTemplateColumns: `repeat(${implementationYears.length}, minmax(0, 1fr))` }}>
         {implementationYears.map((itemYear) => {
-          const yearProgress = calculateStandardYearProgress(task, itemYear, reports);
+          const yearProgress = calculateTaskYearQuarterProgress(task, itemYear, reports);
           return (
-            <div key={itemYear} className={`rounded-lg p-1 ${itemYear === year ? 'bg-brand-50' : 'bg-[#F6F9FE]'}`} title={`${itemYear} 年度进度：${yearProgress == null ? '—' : `${yearProgress}%`}`}>
+            <div key={itemYear} className={`rounded-lg p-1.5 ${itemYear === year ? 'bg-brand-50' : 'bg-[#F6F9FE]'}`} title={`${itemYear} 年度填报完成 ${yearProgress}%`}>
               <div className="text-[10px] font-semibold text-muted">{itemYear}</div>
-              <div className="mt-1 h-1 overflow-hidden rounded-full bg-[#DDE7F6]">
+              <div className="mt-1 h-1.5 overflow-hidden rounded-full bg-[#DDE7F6]">
                 <div className="h-full rounded-full bg-brand-500" style={{ width: `${yearProgress ?? 0}%` }} />
               </div>
-              <div className="mt-0.5 text-[10px] font-bold text-ink">{yearProgress == null ? '—' : `${yearProgress}%`}</div>
+              <div className="mt-0.5 text-[10px] font-bold text-ink">{yearProgress}%</div>
             </div>
           );
         })}

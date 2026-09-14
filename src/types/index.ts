@@ -1,4 +1,5 @@
 export type Year = 2026 | 2027 | 2028 | 2029 | 2030;
+export type Quarter = 1 | 2 | 3 | 4;
 export type TaskStatus = '待启动' | '进行中' | '已完成' | '需协调' | '暂缓';
 export type Priority = '高' | '中' | '低' | '';
 export type UserRole = 'strategy' | 'department';
@@ -94,42 +95,13 @@ export type CompletionStandardItem = {
   yearlyTargets: Partial<Record<Year, number>>;
 };
 
-export type AnnualStandardReport = {
+export type QuarterlyTaskReport = {
   taskId: string;
-  standardId: string;
   year: Year;
+  quarter: Quarter;
   departmentId: string;
-  actualValue: number | null;
-  actualText: string;
-  manualProgress: number | null;
-  note: string;
-  reportStatus: 'unreported' | 'draft' | 'completed';
-};
-
-export type ProgressSource =
-  | 'annual-target-path'
-  | 'milestone-plan'
-  | 'schedule-time'
-  | 'manual-report'
-  | 'none';
-
-export type TaskProgressSummary = {
-  plannedProgress: number | null;
-  actualProgress: number | null;
-  displayProgress: number | null;
-  displayLabel: string;
-  progressSource: ProgressSource;
-  explanation: string;
-};
-
-export type StandardYearProgress = {
-  year: Year;
-  plannedTarget: number | string | null;
-  plannedProgress: number | null;
-  actualValue: number | string | null;
-  actualProgress: number | null;
-  finalTargetGap: number | string | null;
-  reportStatus: 'unreported' | 'draft' | 'completed';
+  content: string;
+  updatedAt: string;
 };
 
 export type IndicatorYearValue = {
