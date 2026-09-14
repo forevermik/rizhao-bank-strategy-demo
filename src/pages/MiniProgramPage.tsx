@@ -106,7 +106,7 @@ function MiniAuthenticatedApp({ logout }: { logout: () => void }) {
   }, [isStrategy]);
 
   const visibleTasks = useMemo(() => getVisibleTasks(tasks, user), [tasks, user]);
-  const currentYearStandards = visibleTasks.flatMap((task) => getTaskStandards(task.id).filter((standard) => isStandardApplicableToYear(standard, year)));
+  const currentYearStandards = visibleTasks.flatMap((task) => getTaskStandards(task.id).filter((standard) => isStandardApplicableToYear(standard, year, task)));
   const yearProgressValues = visibleTasks.map((task) => calculateStandardYearProgress(task, year, reports)).filter((value): value is number => value != null);
   const yearProgress = yearProgressValues.length ? Math.round(yearProgressValues.reduce((sum, value) => sum + value, 0) / yearProgressValues.length) : null;
   const overdueTasks = visibleTasks.filter((task) => isTaskOverdueByStandards(task, reports));
@@ -116,8 +116,8 @@ function MiniAuthenticatedApp({ logout }: { logout: () => void }) {
     .filter((task) => !query.trim() || `${task.code}${task.title}${task.leadDepartmentName}`.includes(query.trim()))
     .sort((a, b) => Number(isTaskOverdueByStandards(b, reports)) - Number(isTaskOverdueByStandards(a, reports)));
   const annualRows = visibleTasks
-    .flatMap((task) => getTaskStandards(task.id).filter((standard) => isStandardApplicableToYear(standard, year)).map((standard) => ({ task, standard, relation: getTaskRelation(task, user?.departmentId) })))
-    .slice(0, 30);
+    .flatMap((task) => getTaskStandards(task.id).filter((standard) => isStandardApplicableToYear(standard, year, task)).map((standard) => ({ task, standard, relation: getTaskRelation(task, user?.departmentId) })));
+  const visibleAnnualRows = annualRows.slice(0, 30);
   const visibleIndicators = user?.role === 'strategy' ? indicators : indicators.filter((indicator) => indicator.departmentId === user?.departmentId);
   const filledIndicators = visibleIndicators.filter((indicator) => isIndicatorFilled(indicator, year)).length;
   const achievedIndicators = visibleIndicators.filter((indicator) => isIndicatorAchieved(indicator, year)).length;
@@ -218,7 +218,7 @@ function MiniAuthenticatedApp({ logout }: { logout: () => void }) {
               <section className="rounded-[18px] bg-white shadow-sm">
                 <div className="border-b border-[#E4EBF5] px-4 py-3 font-black">年度推进列表</div>
                 <div className="divide-y divide-[#E4EBF5]">
-                  {annualRows.map(({ task, standard, relation }) => {
+                  {visibleAnnualRows.map(({ task, standard, relation }) => {
                     const departmentId = user?.role === 'department' ? user.departmentId! : task.leadDepartmentId;
                     const progress = calculateStandardYearProgress(task, year, reports);
                     const overdue = !!standard.finalTargetDate && standard.finalTargetDate < DEMO_DATA_AS_OF_DATE && (progress == null || progress < 100);

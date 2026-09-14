@@ -11,7 +11,7 @@ import type {
   Year,
 } from '../types';
 import { DEMO_DATA_AS_OF_DATE } from '../data/constants';
-import { years } from './taskCalculations';
+import { getTaskImplementationYears, years } from './taskCalculations';
 
 export const progressExplanation =
   '任务和完成标准来自日照银行2026—2030战略发展规划任务分解表。原表未提供完成进度，当前留空待填报；规划目标和实施时间不作为实际完成值。';
@@ -39,7 +39,11 @@ export function cleanReports(reports: AnnualStandardReport[]) {
   });
 }
 
-export function isStandardApplicableToYear(standard: CompletionStandardItem, year: Year) {
+export function isStandardApplicableToYear(standard: CompletionStandardItem, year: Year, task?: StrategicTask) {
+  if (task) {
+    const implementationYears = getTaskImplementationYears(task);
+    if (implementationYears.length) return implementationYears.includes(year);
+  }
   if (getPlannedTarget(standard, year) != null) return true;
   if (standard.finalTargetYear === year) return true;
   if (/每年|每年底|2026[—-]2030|2026至2030/.test(standard.sourceText)) return true;

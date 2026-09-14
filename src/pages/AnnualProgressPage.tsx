@@ -7,9 +7,9 @@ import { DEMO_DATA_AS_OF_DATE } from '../data/constants';
 import { useAuth } from '../hooks/useAuth';
 import { useCompletionReports } from '../hooks/useCompletionReports';
 import { useTaskReporting } from '../hooks/useTaskReporting';
-import type { CompletionStandardItem, StrategicTask, Year } from '../types';
+import type { AnnualStandardReport, CompletionStandardItem, StrategicTask, Year } from '../types';
 import { years } from '../utils/taskCalculations';
-import { calculateStandardYearProgress, getTaskStandards, isStandardApplicableToYear } from '../utils/progressCalculations';
+import { calculateMetricProgress, getStandardReport, getTaskStandards, isStandardApplicableToYear } from '../utils/progressCalculations';
 import { getTaskRelation, getVisibleTasks } from '../utils/taskSelectors';
 
 type StandardRow = {
@@ -42,11 +42,11 @@ export function AnnualProgressPage() {
 
   const rows: StandardRow[] = visibleTasks.flatMap((task) =>
     getTaskStandards(task.id)
-      .filter((standard) => isStandardApplicableToYear(standard, year))
+      .filter((standard) => isStandardApplicableToYear(standard, year, task))
       .map((standard) => ({ task, standard, relation: getTaskRelation(task, user?.departmentId) })),
   );
   const filteredRows = rows.filter(({ task, standard }) => {
-    const progress = calculateStandardYearProgress(task, year, reports);
+    const progress = getAnnualStandardProgress(task, standard, year, reports);
     const overdue = isOverdueStandard(standard, progress);
     const keyword = query.trim();
     const statusOk =
@@ -62,17 +62,18 @@ export function AnnualProgressPage() {
     const queryOk = !keyword || `${task.code}${task.title}${standard.name}${standard.sourceText}${task.leadDepartmentName}`.includes(keyword);
     return statusOk && taskOk && deptOk && areaOk && typeOk && queryOk;
   });
+  const annualTaskCount = new Set(filteredRows.map(({ task }) => task.id)).size;
   const progressValues = filteredRows
-    .map(({ task }) => calculateStandardYearProgress(task, year, reports))
+    .map(({ task, standard }) => getAnnualStandardProgress(task, standard, year, reports))
     .filter((value): value is number => value != null);
   const averageProgress = progressValues.length ? Math.round(progressValues.reduce((sum, value) => sum + Math.min(value, 100), 0) / filteredRows.length) : null;
   const completedCount = filteredRows.filter(({ task, standard }) => {
-    const progress = calculateStandardYearProgress(task, year, reports);
+    const progress = getAnnualStandardProgress(task, standard, year, reports);
     return progress != null && progress >= 100;
   }).length;
-  const reportedCount = filteredRows.filter(({ task }) => calculateStandardYearProgress(task, year, reports) != null).length;
+  const reportedCount = filteredRows.filter(({ task, standard }) => getAnnualStandardProgress(task, standard, year, reports) != null).length;
   const overdueCount = filteredRows.filter(({ task, standard }) => {
-    const progress = calculateStandardYearProgress(task, year, reports);
+    const progress = getAnnualStandardProgress(task, standard, year, reports);
     return isOverdueStandard(standard, progress);
   }).length;
 
@@ -110,7 +111,7 @@ export function AnnualProgressPage() {
       </div>
 
       <div className="grid grid-cols-5 gap-4">
-        <StatCard label="年度项目" value={filteredRows.length} icon={ListChecks} />
+        <StatCard label="年度项目" value={annualTaskCount} icon={ListChecks} />
         <StatCard label="有进度项" value={reportedCount} icon={Database} tone="cyan" />
         <StatCard label="已达成标准项" value={completedCount} icon={CalendarCheck} tone="green" />
         <StatCard label="逾期标准项" value={overdueCount} icon={ClockAlert} tone="amber" />
@@ -131,7 +132,7 @@ export function AnnualProgressPage() {
             </thead>
             <tbody>
               {filteredRows.map(({ task, standard, relation }) => {
-                const progress = calculateStandardYearProgress(task, year, reports);
+                const progress = getAnnualStandardProgress(task, standard, year, reports);
                 const overdue = isOverdueStandard(standard, progress);
                 return (
                   <tr key={`${task.id}-${standard.id}`} className="border-t border-[#E4EBF5] hover:bg-brand-50/50">
@@ -163,4 +164,14 @@ export function AnnualProgressPage() {
 
 function isOverdueStandard(standard: CompletionStandardItem, progress: number | null) {
   return !!standard.finalTargetDate && standard.finalTargetDate < DEMO_DATA_AS_OF_DATE && (progress == null || progress < 100);
+}
+
+function getAnnualStandardProgress(task: StrategicTask, standard: CompletionStandardItem, year: Year, reports: AnnualStandardReport[]) {
+  const leadDepartments = getTaskLeads(task);
+  const progressValues = leadDepartments
+    .map((lead) => calculateMetricProgress(standard, getStandardReport(reports, standard.id, year, lead.id), year))
+    .filter((value): value is number => value != null)
+    .map((value) => Math.max(0, Math.min(100, value)));
+  if (!progressValues.length) return null;
+  return Math.round(progressValues.reduce((sum, value) => sum + value, 0) / leadDepartments.length);
 }

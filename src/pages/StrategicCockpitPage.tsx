@@ -39,7 +39,7 @@ export function StrategicCockpitPage() {
   const areas = ['全部板块', ...Array.from(new Set(tasks.map((task) => task.businessArea)))];
 
   const filtered = useMemo(() => tasks.filter((task) => area === '全部板块' || task.businessArea === area), [area, tasks]);
-  const yearStandards = filtered.flatMap((task) => getTaskStandards(task.id).filter((standard) => isStandardApplicableToYear(standard, year)));
+  const yearStandards = filtered.flatMap((task) => getTaskStandards(task.id).filter((standard) => isStandardApplicableToYear(standard, year, task)));
   const yearProgressValues = filtered.map((task) => calculateStandardYearProgress(task, year, reports)).filter((value): value is number => value != null);
   const yearProgress = yearProgressValues.length ? Math.round(yearProgressValues.reduce((sum, value) => sum + value, 0) / yearProgressValues.length) : null;
   const overdueTasks = filtered.filter((task) => isTaskOverdueByStandards(task, reports));
