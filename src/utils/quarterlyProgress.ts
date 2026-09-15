@@ -34,7 +34,7 @@ export function getMeasureFilledQuarters(
     && report.year === year
     && report.quarter === quarter
     && departmentIds.includes(report.departmentId)
-    && !!report.content.trim()
+    && !!(report.content.trim() || report.expectedCompletionTime?.trim())
   )));
 }
 

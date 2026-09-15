@@ -10,7 +10,9 @@ type QuarterlyReportState = {
 
 export function useQuarterlyReports() {
   const [state, setState] = useLocalStorage<QuarterlyReportState>(QUARTERLY_REPORT_STORAGE_KEY, { reports: [] });
-  const reports = useMemo(() => state.reports.filter((report) => report?.content?.trim()), [state.reports]);
+  const reports = useMemo(() => state.reports.filter((report) => (
+    report?.content?.trim() || report?.expectedCompletionTime?.trim()
+  )), [state.reports]);
 
   function saveReport(report: QuarterlyTaskReport) {
     const remaining = state.reports.filter((item) => !(
@@ -21,7 +23,12 @@ export function useQuarterlyReports() {
       && item.departmentId === report.departmentId
     ));
     const content = report.content.trim();
-    setState({ reports: content ? [...remaining, { ...report, content }] : remaining });
+    const expectedCompletionTime = report.expectedCompletionTime?.trim() ?? '';
+    setState({
+      reports: content || expectedCompletionTime
+        ? [...remaining, { ...report, content, expectedCompletionTime }]
+        : remaining,
+    });
   }
 
   return { reports, saveReport };

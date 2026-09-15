@@ -120,17 +120,34 @@ function QuarterlyProgressPanel({ task, year, implementationYears, setYear, canE
 function MeasureQuarterCard({ task, measure, year, quarter, departmentId, canEdit, filled, reports, saveReport }: { task: StrategicTask; measure: Measure; year: Year; quarter: Quarter; departmentId: string; canEdit: boolean; filled: boolean; reports: QuarterlyTaskReport[]; saveReport: (report: QuarterlyTaskReport) => void }) {
   const report = getQuarterReport(reports, task.id, measure.id, year, quarter, departmentId);
   const [content, setContent] = useState(report?.content ?? '');
+  const [expectedCompletionTime, setExpectedCompletionTime] = useState(report?.expectedCompletionTime ?? '');
   const [saved, setSaved] = useState(false);
   const leadIds = new Set(getTaskLeads(task).map((lead) => lead.id));
   const visibleReports = reports.filter((item) => item.taskId === task.id && item.measureId === measure.id && item.year === year && item.quarter === quarter && leadIds.has(item.departmentId));
   function handleSave() {
-    saveReport({ taskId: task.id, measureId: measure.id, year, quarter, departmentId, content, updatedAt: new Date().toISOString() });
+    saveReport({ taskId: task.id, measureId: measure.id, year, quarter, departmentId, content, expectedCompletionTime, updatedAt: new Date().toISOString() });
     setSaved(true);
     window.setTimeout(() => setSaved(false), 1200);
   }
   return <div className="rounded-xl border border-[#E4EBF5] bg-[#FBFDFF] p-4">
     <div className="flex items-center justify-between"><div className="font-black text-ink">第 {quarter} 季度</div>{filled ? <span className="inline-flex items-center gap-1 rounded-full bg-[#ECFDF3] px-3 py-1 text-xs font-bold text-[#027A48]"><CheckCircle2 size={14} /> 已填报 · +25%</span> : <span className="rounded-full bg-[#F2F4F7] px-3 py-1 text-xs font-bold text-muted">待填报</span>}</div>
-    {canEdit ? <><textarea className="mt-3 min-h-28 w-full rounded-xl border border-[#D9E3F2] bg-white px-3 py-2 text-sm leading-6 outline-none focus:border-brand-500" value={content} onChange={(event) => setContent(event.target.value)} placeholder="填写该举措本季度的工作进展、成果或情况说明" /><div className="mt-3 flex justify-end"><button type="button" onClick={handleSave} className="h-9 rounded-xl bg-brand-500 px-4 text-sm font-bold text-white">{saved ? '已保存' : '保存本季度'}</button></div></> : visibleReports.length ? <div className="mt-3 space-y-2">{visibleReports.map((item) => <div key={`${item.departmentId}-${item.updatedAt}`} className="rounded-xl bg-white px-3 py-3 text-sm leading-6"><div className="mb-1 text-xs font-bold text-brand-500">{departmentName(task, item.departmentId)}</div><div className="whitespace-pre-wrap text-[#344054]">{item.content}</div></div>)}</div> : <div className="mt-3 rounded-xl bg-white px-3 py-5 text-center text-sm text-muted">该举措本季度暂无填报内容</div>}
+    {canEdit ? <>
+      <label className="mt-3 block">
+        <span className="text-xs font-bold text-muted">填报完成情况</span>
+        <textarea className="mt-1 min-h-24 w-full rounded-xl border border-[#D9E3F2] bg-white px-3 py-2 text-sm leading-6 outline-none focus:border-brand-500" value={content} onChange={(event) => setContent(event.target.value)} placeholder="填写该举措本季度已完成的工作、成果或进展情况" />
+      </label>
+      <label className="mt-3 block">
+        <span className="text-xs font-bold text-muted">填报预计完成时间节点</span>
+        <textarea className="mt-1 min-h-20 w-full rounded-xl border border-[#D9E3F2] bg-white px-3 py-2 text-sm leading-6 outline-none focus:border-brand-500" value={expectedCompletionTime} onChange={(event) => setExpectedCompletionTime(event.target.value)} placeholder="填写预计完成日期或阶段性时间节点" />
+      </label>
+      <div className="mt-3 flex justify-end"><button type="button" onClick={handleSave} className="h-9 rounded-xl bg-brand-500 px-4 text-sm font-bold text-white">{saved ? '已保存' : '保存本季度'}</button></div>
+    </> : visibleReports.length ? <div className="mt-3 space-y-2">{visibleReports.map((item) => <div key={`${item.departmentId}-${item.updatedAt}`} className="rounded-xl bg-white px-3 py-3 text-sm leading-6">
+      <div className="mb-2 text-xs font-bold text-brand-500">{departmentName(task, item.departmentId)}</div>
+      <div className="text-xs font-bold text-muted">完成情况</div>
+      <div className="mt-1 whitespace-pre-wrap text-[#344054]">{item.content || '未填写'}</div>
+      <div className="mt-3 text-xs font-bold text-muted">预计完成时间节点</div>
+      <div className="mt-1 whitespace-pre-wrap text-[#344054]">{item.expectedCompletionTime || '未填写'}</div>
+    </div>)}</div> : <div className="mt-3 rounded-xl bg-white px-3 py-5 text-center text-sm text-muted">该举措本季度暂无填报内容</div>}
   </div>;
 }
 

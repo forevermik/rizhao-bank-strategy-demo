@@ -102,6 +102,7 @@ export type QuarterlyTaskReport = {
   quarter: Quarter;
   departmentId: string;
   content: string;
+  expectedCompletionTime?: string;
   updatedAt: string;
 };
 
