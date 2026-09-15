@@ -63,7 +63,7 @@ export function AnnualProgressPage() {
 
   const progressValues = filteredRows.map((row) => getRowProgress(row, year, reports, user?.role === 'department' ? user.departmentId : undefined));
   const averageProgress = progressValues.length ? Math.round(progressValues.reduce((sum, value) => sum + value, 0) / progressValues.length) : null;
-  const reportedCount = progressValues.filter((value) => value > 0).length;
+  const inProgressCount = progressValues.filter((value) => value > 0 && value < 100).length;
   const completedCount = progressValues.filter((value) => value === 100).length;
 
   return (
@@ -98,7 +98,7 @@ export function AnnualProgressPage() {
 
       <div className="grid grid-cols-4 gap-4">
         <StatCard label="细分任务（关键实施举措）" value={filteredRows.length} icon={ListChecks} />
-        <StatCard label="已有季度填报举措" value={reportedCount} icon={Database} tone="cyan" />
+        <StatCard label="填报中举措" value={inProgressCount} icon={Database} tone="cyan" />
         <StatCard label="已完成举措" value={completedCount} icon={CalendarCheck} tone="green" />
         <StatCard label="年度填报进度" value={averageProgress == null ? '—' : averageProgress} suffix={averageProgress == null ? '' : '%'} icon={CalendarCheck} />
       </div>
