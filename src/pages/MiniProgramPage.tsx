@@ -70,6 +70,7 @@ export function MiniProgramPage() {
               <b className="text-ink">演示账号</b><br />
               111zlb：战略管理部门<br />
               222gsywb：公司业务部<br />
+              其他牵头部门：输入部门全称<br />
               222grywb：个人业务部<br />
               222phjrb：普惠金融部<br />
               统一密码：111
