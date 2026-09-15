@@ -23,8 +23,9 @@ import { indicators } from '../data/indicators';
 import { useQuarterlyReports } from '../hooks/useQuarterlyReports';
 import { useTaskReporting } from '../hooks/useTaskReporting';
 import { calculateMeasureYearProgress } from '../utils/quarterlyProgress';
-import { getTaskImplementationYears } from '../utils/taskCalculations';
+import { getTaskImplementationYears, years } from '../utils/taskCalculations';
 import { getTaskLeads } from '../utils/taskSelectors';
+import type { Year } from '../types';
 
 const palette = ['#155EEF', '#06AED4', '#12B76A', '#F79009', '#2E90FA', '#7A5AF8', '#0E9384', '#667085'];
 
@@ -32,14 +33,15 @@ export function StrategicCockpitPage() {
   const { tasks } = useTaskReporting();
   const { reports } = useQuarterlyReports();
   const [area, setArea] = useState('全部板块');
+  const [year, setYear] = useState<Year>(CURRENT_DEMO_YEAR);
   const [activeSummary, setActiveSummary] = useState<'departments' | 'systems' | null>(null);
   const areas = ['全部板块', ...Array.from(new Set(tasks.map((task) => task.businessArea)))];
 
   const filtered = useMemo(() => tasks.filter((task) => area === '全部板块' || task.businessArea === area), [area, tasks]);
-  const activeYearTasks = filtered.filter((task) => getTaskImplementationYears(task).includes(CURRENT_DEMO_YEAR));
+  const activeYearTasks = filtered.filter((task) => getTaskImplementationYears(task).includes(year));
   const measureTotal = activeYearTasks.reduce((sum, task) => sum + task.measures.length, 0);
   const completedMeasureTotal = activeYearTasks.reduce((sum, task) => (
-    sum + task.measures.filter((measure) => calculateMeasureYearProgress(task, measure.id, CURRENT_DEMO_YEAR, reports) === 100).length
+    sum + task.measures.filter((measure) => calculateMeasureYearProgress(task, measure.id, year, reports) === 100).length
   ), 0);
 
   const areaDistribution = Array.from(new Set(filtered.map((task) => task.businessArea))).map((name) => ({
@@ -49,10 +51,10 @@ export function StrategicCockpitPage() {
 
   const leadDepartments = Array.from(new Map(filtered.flatMap(getTaskLeads).map((lead) => [lead.id, lead])).values()).map(({ id: departmentId, name }) => {
     const ownedTasks = filtered.filter((task) => getTaskLeads(task).some((lead) => lead.id === departmentId));
-    const activeOwnedTasks = ownedTasks.filter((task) => getTaskImplementationYears(task).includes(CURRENT_DEMO_YEAR));
+    const activeOwnedTasks = ownedTasks.filter((task) => getTaskImplementationYears(task).includes(year));
     const measureCount = activeOwnedTasks.reduce((sum, task) => sum + task.measures.length, 0);
     const completedCount = activeOwnedTasks.reduce((sum, task) => (
-      sum + task.measures.filter((measure) => calculateMeasureYearProgress(task, measure.id, CURRENT_DEMO_YEAR, reports, departmentId) === 100).length
+      sum + task.measures.filter((measure) => calculateMeasureYearProgress(task, measure.id, year, reports, departmentId) === 100).length
     ), 0);
     return {
       id: departmentId,
@@ -91,8 +93,8 @@ export function StrategicCockpitPage() {
         <Link to="/tasks" className="block focus:outline-none focus:ring-2 focus:ring-brand-500">
           <StatCard compact label="战略任务总数" value={filtered.length} icon={ListChecks} actionLabel="进入战略任务" />
         </Link>
-        <Link to={`/annual?year=${CURRENT_DEMO_YEAR}`} className="block focus:outline-none focus:ring-2 focus:ring-brand-500">
-          <StatCard compact label={`${CURRENT_DEMO_YEAR}关键举措`} value={measureTotal} icon={Workflow} tone="cyan" actionLabel={`已完成 ${completedMeasureTotal} 项`} />
+        <Link to={`/annual?year=${year}`} className="block focus:outline-none focus:ring-2 focus:ring-brand-500">
+          <StatCard compact label={`${year}关键举措`} value={measureTotal} icon={Workflow} tone="cyan" actionLabel={`已完成 ${completedMeasureTotal} 项`} />
         </Link>
         <button type="button" onClick={() => openSummary('departments')} className="block text-left focus:outline-none focus:ring-2 focus:ring-brand-500">
           <StatCard compact label="牵头部门数" value={leadDepartments.length} icon={Building2} tone="cyan" actionLabel="查看部门明细" />
@@ -114,7 +116,7 @@ export function StrategicCockpitPage() {
                 <Link key={item.id} to={`/tasks?lead=${item.id}`} className="rounded-xl bg-[#F8FBFF] p-4 text-sm transition hover:bg-brand-50">
                   <div className="font-black text-ink">{item.name}</div>
                   <div className="mt-2 text-muted">牵头任务 {item.count} 项</div>
-                  <div className="mt-1 text-muted">{CURRENT_DEMO_YEAR} 关键举措 {item.measureCount} 项 · 已完成 {item.completedCount} 项</div>
+                  <div className="mt-1 text-muted">{year} 关键举措 {item.measureCount} 项 · 已完成 {item.completedCount} 项</div>
                 </Link>
               ))}
             </div>
@@ -136,7 +138,23 @@ export function StrategicCockpitPage() {
       </section>}
 
       <div className="grid grid-cols-12 gap-4">
-      <ChartFrame className="col-span-8" title={`各牵头部门关键实施举措完成情况（${CURRENT_DEMO_YEAR}）`} action={<span className="text-xs font-semibold text-muted">拖动底部滑块查看全部部门</span>}>
+      <ChartFrame
+        className="col-span-8"
+        title={`各牵头部门关键实施举措完成情况（${year}）`}
+        action={(
+          <div className="flex items-center gap-3">
+            <span className="text-xs font-semibold text-muted">拖动底部滑块查看全部部门</span>
+            <select
+              aria-label="柱状图年份"
+              className="h-9 rounded-xl border border-[#D9E3F2] bg-white px-3 text-sm font-bold text-ink"
+              value={year}
+              onChange={(event) => setYear(Number(event.target.value) as Year)}
+            >
+              {years.map((item) => <option key={item} value={item}>{item}年</option>)}
+            </select>
+          </div>
+        )}
+      >
         <div className="overflow-x-auto pb-2">
           <div style={{ width: Math.max(860, departmentMeasureData.length * 92), height: 290 }}>
             <ResponsiveContainer width="100%" height="100%">

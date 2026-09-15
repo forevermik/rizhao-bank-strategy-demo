@@ -100,13 +100,13 @@ export function IndicatorListPage() {
             })}
             {!filtered.length && (
               <tr>
-                <td colSpan={10} className="px-4 py-10 text-center text-sm font-semibold text-muted">没有符合当前筛选条件的指标任务</td>
+                <td colSpan={10} className="px-4 py-10 text-center text-sm font-semibold text-muted">当前暂无指标任务</td>
               </tr>
             )}
           </tbody>
         </table>
       </div>
-      <p className="text-xs text-muted">当前完成值为前端演示数据，仅用于界面展示。</p>
+      <p className="text-xs text-muted">指标任务模块已预留，可在后续规划中补充指标数据。</p>
     </div>
   );
 }
