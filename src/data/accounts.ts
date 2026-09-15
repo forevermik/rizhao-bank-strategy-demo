@@ -1,7 +1,6 @@
 import type { DemoAccount } from '../types';
-import { departments } from './departments';
 
-const configuredAccounts: DemoAccount[] = [
+export const accounts: DemoAccount[] = [
   {
     "username": "111zlb",
     "password": "111",
@@ -226,19 +225,4 @@ const configuredAccounts: DemoAccount[] = [
     "departmentId": "zhbs",
     "departmentName": "总行各部室"
   }
-];
-
-const configuredDepartmentIds = new Set(configuredAccounts.map((account) => account.departmentId));
-
-export const accounts: DemoAccount[] = [
-  ...configuredAccounts,
-  ...departments
-    .filter((department) => !configuredDepartmentIds.has(department.id))
-    .map((department) => ({
-      username: department.name,
-      password: '111',
-      role: 'department' as const,
-      departmentId: department.id,
-      departmentName: department.name,
-    })),
 ];

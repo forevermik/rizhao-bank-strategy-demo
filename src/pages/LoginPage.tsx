@@ -86,7 +86,6 @@ export function LoginPage() {
               <div className="mt-3 grid grid-cols-2 gap-x-4 gap-y-2 text-sm text-muted">
                 <span><b className="text-brand-500">111zlb</b>：战略管理部门</span>
                 <span><b className="text-brand-500">222gsywb</b>：公司业务部</span>
-                <span><b className="text-brand-500">其他牵头部门</b>：可输入部门全称</span>
                 <span><b className="text-brand-500">222grywb</b>：个人业务部</span>
                 <span><b className="text-brand-500">222phjrb</b>：普惠金融部</span>
                 {expanded && (

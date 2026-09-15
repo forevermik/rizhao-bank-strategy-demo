@@ -99,7 +99,7 @@ function QuarterlyProgressPanel({ task, year, implementationYears, setYear, canE
   const stats = getTaskQuarterStats(task, year, reports, progressDepartmentId);
   const yearProgress = calculateTaskYearQuarterProgress(task, year, reports, progressDepartmentId) ?? 0;
   return <section className="soft-panel rounded-ui p-5">
-    <div className="flex flex-wrap items-start justify-between gap-4"><div><h3 className="text-xl font-black text-ink">关键举措季度进度{canEdit ? '填报' : '查看'}</h3><p className="mt-2 text-sm font-semibold text-muted">{canEdit ? '每季度填写完成情况和预计完成时间节点；任一项有内容，该季度计 25%。' : isLockedForSupport ? '协同部门为只读状态，可查看牵头部门填写的完成情况和预计完成时间节点。' : '战略管理部门查看各项关键举措的季度完成情况、预计完成时间节点及汇总进度。'}</p></div><div className="flex flex-wrap gap-2">{implementationYears.map((item) => <button key={item} onClick={() => setYear(item)} className={`h-9 rounded-xl px-4 text-sm font-bold ${year === item ? 'bg-brand-500 text-white' : 'bg-[#F6F9FE] text-muted'}`}>{item}</button>)}</div></div>
+    <div className="flex flex-wrap items-start justify-between gap-4"><div><h3 className="text-xl font-black text-ink">关键举措季度进度{canEdit ? '填报' : '查看'}</h3><p className="mt-2 text-sm font-semibold text-muted">{canEdit ? '所有牵头部门统一填写填报内容（完成情况）和预计完成时间节点；任一项有内容，该季度计 25%。' : isLockedForSupport ? '协同部门为只读状态，可查看牵头部门填写的内容和预计完成时间节点。' : '战略管理部门查看各牵头部门的填报内容、预计完成时间节点及汇总进度。'}</p></div><div className="flex flex-wrap gap-2">{implementationYears.map((item) => <button key={item} onClick={() => setYear(item)} className={`h-9 rounded-xl px-4 text-sm font-bold ${year === item ? 'bg-brand-500 text-white' : 'bg-[#F6F9FE] text-muted'}`}>{item}</button>)}</div></div>
     <div className="mt-5 rounded-ui bg-[#F8FBFF] p-4">
       <div className="flex items-center justify-between"><span className="font-black text-ink">{year} 年关键举措填报概览</span><span className="text-2xl font-black text-brand-500">{yearProgress}%</span></div>
       <div className="mt-3 grid grid-cols-3 gap-3 text-sm"><SummaryBox label="关键举措" value={`${stats.measureCount} 项`} /><SummaryBox label="已完成举措" value={`${stats.completedMeasures} 项`} /><SummaryBox label="已填报季度单元" value={`${stats.filledSlots} / ${stats.totalSlots}`} /></div>
@@ -133,7 +133,7 @@ function MeasureQuarterCard({ task, measure, year, quarter, departmentId, canEdi
     <div className="flex items-center justify-between"><div className="font-black text-ink">第 {quarter} 季度</div>{filled ? <span className="inline-flex items-center gap-1 rounded-full bg-[#ECFDF3] px-3 py-1 text-xs font-bold text-[#027A48]"><CheckCircle2 size={14} /> 已填报 · +25%</span> : <span className="rounded-full bg-[#F2F4F7] px-3 py-1 text-xs font-bold text-muted">待填报</span>}</div>
     {canEdit ? <>
       <label className="mt-3 block">
-        <span className="text-xs font-bold text-muted">填报完成情况</span>
+        <span className="text-xs font-bold text-muted">填报内容（完成情况）</span>
         <textarea className="mt-1 min-h-24 w-full rounded-xl border border-[#D9E3F2] bg-white px-3 py-2 text-sm leading-6 outline-none focus:border-brand-500" value={content} onChange={(event) => setContent(event.target.value)} placeholder="填写该举措本季度已完成的工作、成果或进展情况" />
       </label>
       <label className="mt-3 block">
@@ -143,7 +143,7 @@ function MeasureQuarterCard({ task, measure, year, quarter, departmentId, canEdi
       <div className="mt-3 flex justify-end"><button type="button" onClick={handleSave} className="h-9 rounded-xl bg-brand-500 px-4 text-sm font-bold text-white">{saved ? '已保存' : '保存本季度'}</button></div>
     </> : visibleReports.length ? <div className="mt-3 space-y-2">{visibleReports.map((item) => <div key={`${item.departmentId}-${item.updatedAt}`} className="rounded-xl bg-white px-3 py-3 text-sm leading-6">
       <div className="mb-2 text-xs font-bold text-brand-500">{departmentName(task, item.departmentId)}</div>
-      <div className="text-xs font-bold text-muted">完成情况</div>
+      <div className="text-xs font-bold text-muted">填报内容（完成情况）</div>
       <div className="mt-1 whitespace-pre-wrap text-[#344054]">{item.content || '未填写'}</div>
       <div className="mt-3 text-xs font-bold text-muted">预计完成时间节点</div>
       <div className="mt-1 whitespace-pre-wrap text-[#344054]">{item.expectedCompletionTime || '未填写'}</div>
