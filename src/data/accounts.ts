@@ -1,228 +1,36 @@
 import type { DemoAccount } from '../types';
 
 export const accounts: DemoAccount[] = [
-  {
-    "username": "111zlb",
-    "password": "111",
-    "role": "strategy",
-    "departmentId": "strategy",
-    "departmentName": "战略管理部门"
-  },
-  {
-    "username": "222bgs",
-    "password": "111",
-    "role": "department",
-    "departmentId": "bgs",
-    "departmentName": "办公室"
-  },
-  {
-    "username": "222dsbgs",
-    "password": "111",
-    "role": "department",
-    "departmentId": "dsbgs",
-    "departmentName": "董事会办公室"
-  },
-  {
-    "username": "222dwdgb",
-    "password": "111",
-    "role": "department",
-    "departmentId": "dwdgb",
-    "departmentName": "党委督导办公室（机关纪委）"
-  },
-  {
-    "username": "222fzjg",
-    "password": "111",
-    "role": "department",
-    "departmentId": "fzjg",
-    "departmentName": "分支机构"
-  },
-  {
-    "username": "222gjywb",
-    "password": "111",
-    "role": "department",
-    "departmentId": "gjywb",
-    "departmentName": "国际业务部"
-  },
-  {
-    "username": "222flhgb",
-    "password": "111",
-    "role": "department",
-    "departmentId": "gqb",
-    "departmentName": "法律合规部"
-  },
-  {
-    "username": "222grywb",
-    "password": "111",
-    "role": "department",
-    "departmentId": "grywb",
-    "departmentName": "个人业务部"
-  },
-  {
-    "username": "222gsywb",
-    "password": "111",
-    "role": "department",
-    "departmentId": "gsywb",
-    "departmentName": "公司业务部"
-  },
-  {
-    "username": "222gyljrzx",
-    "password": "111",
-    "role": "department",
-    "departmentId": "gyljrzx",
-    "departmentName": "供应链金融中心"
-  },
-  {
-    "username": "222jgywb",
-    "password": "111",
-    "role": "department",
-    "departmentId": "jgywb",
-    "departmentName": "机构业务部"
-  },
-  {
-    "username": "222jhcwb",
-    "password": "111",
-    "role": "department",
-    "departmentId": "jhcwb",
-    "departmentName": "计划财务部"
-  },
-  {
-    "username": "222jrkjb",
-    "password": "111",
-    "role": "department",
-    "departmentId": "jrkjb",
-    "departmentName": "金融科技部"
-  },
-  {
-    "username": "222jrscb",
-    "password": "111",
-    "role": "department",
-    "departmentId": "jrscb",
-    "departmentName": "金融市场部"
-  },
-  {
-    "username": "222nbfh",
-    "password": "111",
-    "role": "department",
-    "departmentId": "nbfh",
-    "departmentName": "宁波分行"
-  },
-  {
-    "username": "222phjrb",
-    "password": "111",
-    "role": "department",
-    "departmentId": "phjrb",
-    "departmentName": "普惠金融部"
-  },
-  {
-    "username": "222pjywzx",
-    "password": "111",
-    "role": "department",
-    "departmentId": "pjywzx",
-    "departmentName": "票据业务中心"
-  },
-  {
-    "username": "222pzz",
-    "password": "111",
-    "role": "department",
-    "departmentId": "pzz",
-    "departmentName": "派驻组"
-  },
-  {
-    "username": "222qdyyb",
-    "password": "111",
-    "role": "department",
-    "departmentId": "qdyyb",
-    "departmentName": "渠道运营部"
-  },
-  {
-    "username": "222rlzyb",
-    "password": "111",
-    "role": "department",
-    "departmentId": "rlzyb",
-    "departmentName": "人力资源部"
-  },
-  {
-    "username": "222rzfh",
-    "password": "111",
-    "role": "department",
-    "departmentId": "rzfh",
-    "departmentName": "日照分行"
-  },
-  {
-    "username": "222sjjcb",
-    "password": "111",
-    "role": "department",
-    "departmentId": "sjjcb",
-    "departmentName": "审计部"
-  },
-  {
-    "username": "222sxqrb",
-    "password": "111",
-    "role": "department",
-    "departmentId": "sxqrb",
-    "departmentName": "授信确认部"
-  },
-  {
-    "username": "222szjrb",
-    "password": "111",
-    "role": "department",
-    "departmentId": "szjrb",
-    "departmentName": "数字金融部"
-  },
-  {
-    "username": "222szzxldxz",
-    "password": "111",
-    "role": "department",
-    "departmentId": "szzxldxz",
-    "departmentName": "数字化转型工作领导小组"
-  },
-  {
-    "username": "222wffh",
-    "password": "111",
-    "role": "department",
-    "departmentId": "wffh",
-    "departmentName": "潍坊分行"
-  },
-  {
-    "username": "222wgglb",
-    "password": "111",
-    "role": "department",
-    "departmentId": "wgglb",
-    "departmentName": "稳健管理部"
-  },
-  {
-    "username": "222xfjrb",
-    "password": "111",
-    "role": "department",
-    "departmentId": "xfjrb",
-    "departmentName": "消费金融部"
-  },
-  {
-    "username": "222ywtx",
-    "password": "111",
-    "role": "department",
-    "departmentId": "ywtx",
-    "departmentName": "各业务条线"
-  },
-  {
-    "username": "222yyglb",
-    "password": "111",
-    "role": "department",
-    "departmentId": "yyglb",
-    "departmentName": "运营管理部"
-  },
-  {
-    "username": "222zcbb",
-    "password": "111",
-    "role": "department",
-    "departmentId": "zcbb",
-    "departmentName": "资产保全部"
-  },
-  {
-    "username": "222zhbs",
-    "password": "111",
-    "role": "department",
-    "departmentId": "zhbs",
-    "departmentName": "总行各部室"
-  }
+  { username: '111zlb', password: '111', role: 'strategy', departmentId: 'strategy', departmentName: '战略管理部门' },
+  { username: '222gsywb', password: '111', role: 'department', departmentId: 'gsywb', departmentName: '公司业务部' },
+  { username: '222xqyjrb', password: '111', role: 'department', departmentId: 'rz-dept-411b08560a', departmentName: '小企业金融部' },
+  { username: '222xqyxdzx', password: '111', role: 'department', departmentId: 'rz-dept-28197ff3f1', departmentName: '小企业信贷中心' },
+  { username: '222jyyhb', password: '111', role: 'department', departmentId: 'rz-dept-3c14f17449', departmentName: '交易银行部' },
+  { username: '222tzyhyzcglb', password: '111', role: 'department', departmentId: 'rz-dept-88470fef13', departmentName: '投资银行与资产管理部' },
+  { username: '222thyzcglb', password: '111', role: 'department', departmentId: 'rz-dept-71d974e8f1', departmentName: '投行与资产管理部' },
+  { username: '222gyljrzx', password: '111', role: 'department', departmentId: 'gyljrzx', departmentName: '供应链金融中心' },
+  { username: '222pjzx', password: '111', role: 'department', departmentId: 'pjywzx', departmentName: '票据中心' },
+  { username: '222jrscb', password: '111', role: 'department', departmentId: 'jrscb', departmentName: '金融市场部' },
+  { username: '222lsjrb', password: '111', role: 'department', departmentId: 'rz-dept-8fde921518', departmentName: '零售金融部' },
+  { username: '222gfzjg', password: '111', role: 'department', departmentId: 'fzjg', departmentName: '各分支机构' },
+  { username: '222kjb', password: '111', role: 'department', departmentId: 'rz-dept-fc565add28', departmentName: '科技部' },
+  { username: '222szyhb', password: '111', role: 'department', departmentId: 'rz-dept-64ddb15700', departmentName: '数字银行部' },
+  { username: '222sxspb', password: '111', role: 'department', departmentId: 'rz-dept-ae0d6e212a', departmentName: '授信审批部' },
+  { username: '222lsxdzx', password: '111', role: 'department', departmentId: 'rz-dept-93f1bc233c', departmentName: '零售信贷中心' },
+  { username: '222lsxdzxdywbm', password: '111', role: 'department', departmentId: 'rz-dept-db452550f0', departmentName: '零售信贷中心等业务部门' },
+  { username: '222fxglb', password: '111', role: 'department', departmentId: 'rz-dept-8b959faf8a', departmentName: '风险管理部' },
+  { username: '222rlzyb', password: '111', role: 'department', departmentId: 'rlzyb', departmentName: '人力资源部' },
+  { username: '222xxkjb', password: '111', role: 'department', departmentId: 'rz-dept-31b38847dd', departmentName: '信息科技部' },
+  { username: '222cjjryyzx', password: '111', role: 'department', departmentId: 'rz-dept-2ac3877548', departmentName: '场景金融运营中心' },
+  { username: '222jhcwb', password: '111', role: 'department', departmentId: 'jhcwb', departmentName: '计划财务部' },
+  { username: '222zhgbs', password: '111', role: 'department', departmentId: 'zhbs', departmentName: '总行各部室' },
+  { username: '222zcbb', password: '111', role: 'department', departmentId: 'zcbb', departmentName: '资产保全部' },
+  { username: '222flhgb', password: '111', role: 'department', departmentId: 'gqb', departmentName: '法律合规部' },
+  { username: '222wljrb', password: '111', role: 'department', departmentId: 'rz-dept-6606be1a79', departmentName: '网络金融部' },
+  { username: '222yyglb', password: '111', role: 'department', departmentId: 'rz-dept-f3300dd6a1', departmentName: '营运管理部' },
+  { username: '222xczxb', password: '111', role: 'department', departmentId: 'rz-dept-23c16e45e9', departmentName: '乡村振兴部' },
+  { username: '222sjjcb', password: '111', role: 'department', departmentId: 'sjjcb', departmentName: '审计部' },
+  { username: '222kjxxb', password: '111', role: 'department', departmentId: 'rz-dept-f97031f54f', departmentName: '科技信息部' },
+  { username: '222szjrb', password: '111', role: 'department', departmentId: 'szjrb', departmentName: '数字金融部' },
+  { username: '222dqbgs', password: '111', role: 'department', departmentId: 'rz-dept-5ddc870073', departmentName: '党群/办公室' },
 ];

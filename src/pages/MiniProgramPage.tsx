@@ -7,6 +7,7 @@ import { AiAssistant } from '../components/ai-assistant/AiAssistant';
 import { dashboardSeed } from '../data/dashboard';
 import { indicators } from '../data/indicators';
 import { CURRENT_DEMO_YEAR, DEMO_DATA_AS_OF_DATE } from '../data/constants';
+import { accounts } from '../data/accounts';
 import { useAuth } from '../hooks/useAuth';
 import { useQuarterlyReports } from '../hooks/useQuarterlyReports';
 import { useTaskReporting } from '../hooks/useTaskReporting';
@@ -68,10 +69,7 @@ export function MiniProgramPage() {
             <button className="mt-5 h-12 w-full rounded-[16px] bg-brand-500 font-black text-white shadow-lg shadow-brand-500/20">登录</button>
             <div className="mt-5 rounded-[16px] bg-[#EEF5FF] p-3 text-xs leading-6 text-muted">
               <b className="text-ink">演示账号</b><br />
-              111zlb：战略管理部门<br />
-              222gsywb：公司业务部<br />
-              222grywb：个人业务部<br />
-              222phjrb：普惠金融部<br />
+              {accounts.slice(0, 4).map((item) => <span key={item.username}>{item.username}：{item.departmentName}<br /></span>)}
               统一密码：111
             </div>
           </form>

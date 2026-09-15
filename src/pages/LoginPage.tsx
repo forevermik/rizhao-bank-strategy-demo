@@ -3,6 +3,7 @@ import { ArrowRight, Eye, LockKeyhole, UserRound } from 'lucide-react';
 import { Navigate, useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { LogoMark } from '../components/common/LogoMark';
+import { accounts } from '../data/accounts';
 
 export function LoginPage() {
   const { user, login, matchAccount } = useAuth();
@@ -13,6 +14,7 @@ export function LoginPage() {
   const [expanded, setExpanded] = useState(false);
   const [transitioning, setTransitioning] = useState(false);
   const matched = useMemo(() => matchAccount(account), [account, matchAccount]);
+  const visibleAccounts = expanded ? accounts : accounts.slice(0, 4);
 
   useEffect(() => {
     if (account && !matched) setMessage('未匹配到演示部门');
@@ -83,21 +85,10 @@ export function LoginPage() {
 
             <div className="mt-8 rounded-ui bg-[#EEF5FF] p-4">
               <div className="text-sm font-extrabold text-ink">演示账号</div>
-              <div className="mt-3 grid grid-cols-2 gap-x-4 gap-y-2 text-sm text-muted">
-                <span><b className="text-brand-500">111zlb</b>：战略管理部门</span>
-                <span><b className="text-brand-500">222gsywb</b>：公司业务部</span>
-                <span><b className="text-brand-500">222grywb</b>：个人业务部</span>
-                <span><b className="text-brand-500">222phjrb</b>：普惠金融部</span>
-                {expanded && (
-                  <>
-                    <span><b className="text-brand-500">222jgywb</b>：机构业务部</span>
-                    <span><b className="text-brand-500">222xfjrb</b>：消费金融部</span>
-                    <span><b className="text-brand-500">222gjywb</b>：国际业务部</span>
-                    <span><b className="text-brand-500">222szjrb</b>：数字金融部</span>
-                    <span><b className="text-brand-500">222jrkjb</b>：金融科技部</span>
-                    <span><b className="text-brand-500">222jhcwb</b>：计划财务部</span>
-                  </>
-                )}
+              <div className={`mt-3 grid grid-cols-2 gap-x-4 gap-y-2 pr-1 text-sm text-muted ${expanded ? 'max-h-56 overflow-y-auto' : ''}`}>
+                {visibleAccounts.map((item) => (
+                  <span key={item.username}><b className="text-brand-500">{item.username}</b>：{item.departmentName}</span>
+                ))}
               </div>
               <div className="mt-3 flex items-center justify-between text-sm">
                 <span className="font-semibold text-muted">统一密码：111</span>
