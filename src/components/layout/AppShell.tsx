@@ -1,6 +1,7 @@
 import { NavLink, Outlet, useLocation } from 'react-router-dom';
 import {
   Building2,
+  CalendarCheck,
   ClipboardList,
   Gauge,
   LogOut,
@@ -16,6 +17,7 @@ const navItems = [
   { to: '/cockpit', label: '战略驾驶舱', icon: Gauge },
   { to: '/workbench', label: '工作台', icon: Building2 },
   { to: '/tasks', label: '战略任务', icon: ClipboardList },
+  { to: '/annual', label: '年度推进', icon: CalendarCheck },
   { to: '/indicators', label: '指标任务', icon: Target },
 ];
 
@@ -23,6 +25,7 @@ const titleMap: Record<string, string> = {
   cockpit: '战略驾驶舱',
   workbench: '工作台',
   tasks: '战略任务',
+  annual: '年度推进',
   indicators: '指标任务',
 };
 
@@ -32,8 +35,8 @@ export function AppShell() {
   const location = useLocation();
   const isStrategic = user?.role === 'strategy';
   const visibleNavItems = navItems.filter((item) => {
-    if (isStrategic) return ['/cockpit', '/tasks', '/indicators'].includes(item.to);
-    return ['/workbench', '/indicators'].includes(item.to);
+    if (isStrategic) return ['/cockpit', '/tasks', '/annual', '/indicators'].includes(item.to);
+    return ['/workbench', '/annual', '/indicators'].includes(item.to);
   });
   const key = location.pathname.split('/')[1] || (isStrategic ? 'cockpit' : 'workbench');
   const title = titleMap[key] ?? '战略规划';
@@ -77,7 +80,7 @@ export function AppShell() {
         {!collapsed && (
           <div className="absolute bottom-5 left-4 right-4 rounded-ui bg-gradient-to-br from-brand-700 to-brand-500 p-4 text-white shadow-glow">
             <div className="text-sm font-semibold">2026 战略执行季</div>
-            <div className="mt-2 text-xs leading-5 text-white/75">聚焦完成标准、部门推进与指标达成的统一管理视图。</div>
+            <div className="mt-2 text-xs leading-5 text-white/75">聚焦关键举措、季度填报与指标达成的统一管理视图。</div>
           </div>
         )}
       </aside>

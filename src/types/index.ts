@@ -97,6 +97,7 @@ export type CompletionStandardItem = {
 
 export type QuarterlyTaskReport = {
   taskId: string;
+  measureId: string;
   year: Year;
   quarter: Quarter;
   departmentId: string;

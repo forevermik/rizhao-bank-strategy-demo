@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 import type { QuarterlyTaskReport } from '../types';
 import { useLocalStorage } from './useLocalStorage';
 
-export const QUARTERLY_REPORT_STORAGE_KEY = 'rizhao-quarterly-task-reports-v1';
+export const QUARTERLY_REPORT_STORAGE_KEY = 'rizhao-quarterly-measure-reports-v2';
 
 type QuarterlyReportState = {
   reports: QuarterlyTaskReport[];
@@ -15,6 +15,7 @@ export function useQuarterlyReports() {
   function saveReport(report: QuarterlyTaskReport) {
     const remaining = state.reports.filter((item) => !(
       item.taskId === report.taskId
+      && item.measureId === report.measureId
       && item.year === report.year
       && item.quarter === report.quarter
       && item.departmentId === report.departmentId
