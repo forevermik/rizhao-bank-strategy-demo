@@ -69,16 +69,15 @@ export function StrategicCockpitPage() {
     .map((item) => ({ name: item.name, total: item.measureCount, completed: item.completedCount }));
 
   const openSummary = (target: 'departments' | 'systems') => {
-    setActiveSummary(target);
-    window.setTimeout(() => document.getElementById('summary-detail')?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 40);
+    setActiveSummary((current) => current === target ? null : target);
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       <div className="flex items-end justify-between">
         <div>
-          <h2 className="text-3xl font-black text-ink">日照银行“十五五”战略驾驶舱</h2>
-          <p className="mt-2 text-muted">战略管理部门 · 全行任务执行总览</p>
+          <h2 className="text-2xl font-black text-ink">日照银行“十五五”战略驾驶舱</h2>
+          <p className="mt-1 text-sm text-muted">战略管理部门 · 全行任务执行总览</p>
         </div>
         <div className="flex items-center gap-3">
           <div className="rounded-full bg-[#FFF7ED] px-4 py-2 text-sm font-bold text-[#B54708]">数据截止日期：{DEMO_DATA_AS_OF_DATE}</div>
@@ -90,28 +89,27 @@ export function StrategicCockpitPage() {
 
       <div className="grid grid-cols-5 gap-4">
         <Link to="/tasks" className="block focus:outline-none focus:ring-2 focus:ring-brand-500">
-          <StatCard label="战略任务总数" value={filtered.length} icon={ListChecks} actionLabel="进入战略任务" />
+          <StatCard compact label="战略任务总数" value={filtered.length} icon={ListChecks} actionLabel="进入战略任务" />
         </Link>
         <Link to={`/annual?year=${CURRENT_DEMO_YEAR}`} className="block focus:outline-none focus:ring-2 focus:ring-brand-500">
-          <StatCard label={`${CURRENT_DEMO_YEAR}关键举措`} value={measureTotal} icon={Workflow} tone="cyan" actionLabel={`已完成 ${completedMeasureTotal} 项`} />
+          <StatCard compact label={`${CURRENT_DEMO_YEAR}关键举措`} value={measureTotal} icon={Workflow} tone="cyan" actionLabel={`已完成 ${completedMeasureTotal} 项`} />
         </Link>
         <button type="button" onClick={() => openSummary('departments')} className="block text-left focus:outline-none focus:ring-2 focus:ring-brand-500">
-          <StatCard label="牵头部门数" value={leadDepartments.length} icon={Building2} tone="cyan" actionLabel="查看部门明细" />
+          <StatCard compact label="牵头部门数" value={leadDepartments.length} icon={Building2} tone="cyan" actionLabel="查看部门明细" />
         </button>
         <Link to="/indicators" className="block focus:outline-none focus:ring-2 focus:ring-brand-500">
-          <StatCard label="指标任务总数" value={indicators.length} icon={Target} tone="green" actionLabel="进入指标任务" />
+          <StatCard compact label="指标任务总数" value={indicators.length} icon={Target} tone="green" actionLabel="进入指标任务" />
         </Link>
         <button type="button" onClick={() => openSummary('systems')} className="block text-left focus:outline-none focus:ring-2 focus:ring-brand-500">
-          <StatCard label="系统建设事项" value={dashboardSeed.systemProjects.length} icon={Database} tone="amber" actionLabel="查看系统清单" />
+          <StatCard compact label="系统建设事项" value={dashboardSeed.systemProjects.length} icon={Database} tone="amber" actionLabel="查看系统清单" />
         </button>
       </div>
 
-      <section id="summary-detail" className="soft-panel rounded-ui p-5">
-        {!activeSummary && <div className="text-sm font-semibold text-muted">点击上方总览卡片，可进入对应模块或在此查看明细。</div>}
+      {activeSummary && <section id="summary-detail" className="soft-panel max-h-60 overflow-y-auto rounded-ui p-4">
         {activeSummary === 'departments' && (
           <div>
             <h3 className="text-lg font-black text-ink">牵头部门明细</h3>
-            <div className="mt-4 grid grid-cols-4 gap-3">
+            <div className="mt-3 grid grid-cols-4 gap-3">
               {leadDepartments.map((item) => (
                 <Link key={item.id} to={`/tasks?lead=${item.id}`} className="rounded-xl bg-[#F8FBFF] p-4 text-sm transition hover:bg-brand-50">
                   <div className="font-black text-ink">{item.name}</div>
@@ -125,7 +123,7 @@ export function StrategicCockpitPage() {
         {activeSummary === 'systems' && (
           <div>
             <h3 className="text-lg font-black text-ink">系统建设清单</h3>
-            <div className="mt-4 grid grid-cols-2 gap-3">
+            <div className="mt-3 grid grid-cols-2 gap-3">
               {dashboardSeed.systemProjects.slice(0, 8).map((item) => (
                 <div key={`${item.name}-${item.dueDate}`} className="rounded-xl bg-[#F8FBFF] p-4 text-sm">
                   <div className="font-bold text-ink">{item.name}</div>
@@ -135,15 +133,16 @@ export function StrategicCockpitPage() {
             </div>
           </div>
         )}
-      </section>
+      </section>}
 
-      <ChartFrame title={`各牵头部门关键实施举措完成情况（${CURRENT_DEMO_YEAR}）`}>
+      <div className="grid grid-cols-12 gap-4">
+      <ChartFrame className="col-span-8" title={`各牵头部门关键实施举措完成情况（${CURRENT_DEMO_YEAR}）`} action={<span className="text-xs font-semibold text-muted">拖动底部滑块查看全部部门</span>}>
         <div className="overflow-x-auto pb-2">
-          <div style={{ width: Math.max(1180, departmentMeasureData.length * 108), height: 390 }}>
+          <div style={{ width: Math.max(860, departmentMeasureData.length * 92), height: 290 }}>
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={departmentMeasureData} margin={{ top: 28, right: 24, left: 0, bottom: 88 }} barGap={4}>
+              <BarChart data={departmentMeasureData} margin={{ top: 24, right: 18, left: 0, bottom: 68 }} barGap={3}>
                 <CartesianGrid stroke="#E4EBF5" strokeDasharray="3 3" vertical={false} />
-                <XAxis dataKey="name" interval={0} angle={-32} textAnchor="end" height={100} tick={{ fill: '#667085', fontSize: 12 }} />
+                <XAxis dataKey="name" interval={0} angle={-28} textAnchor="end" height={78} tick={{ fill: '#667085', fontSize: 11 }} />
                 <YAxis allowDecimals={false} tick={{ fill: '#667085', fontSize: 12 }} />
                 <Tooltip wrapperClassName="chart-tooltip" />
                 <Legend verticalAlign="top" align="center" />
@@ -159,10 +158,10 @@ export function StrategicCockpitPage() {
         </div>
       </ChartFrame>
 
-      <ChartFrame title="各业务板块任务分布">
-        <ResponsiveContainer width="100%" height={300}>
+      <ChartFrame className="col-span-4" title="各业务板块任务分布">
+        <ResponsiveContainer width="100%" height={290}>
           <PieChart>
-            <Pie data={areaDistribution.slice(0, 10)} dataKey="value" nameKey="name" innerRadius={58} outerRadius={102} paddingAngle={3}>
+            <Pie data={areaDistribution.slice(0, 10)} dataKey="value" nameKey="name" innerRadius={48} outerRadius={78} paddingAngle={3} cx="38%">
               {areaDistribution.slice(0, 10).map((_, index) => <Cell key={index} fill={palette[index % palette.length]} />)}
             </Pie>
             <Tooltip wrapperClassName="chart-tooltip" />
@@ -170,6 +169,7 @@ export function StrategicCockpitPage() {
           </PieChart>
         </ResponsiveContainer>
       </ChartFrame>
+      </div>
     </div>
   );
 }
