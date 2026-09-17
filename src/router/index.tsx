@@ -1,4 +1,4 @@
-import { createBrowserRouter, Navigate } from 'react-router-dom';
+import { createBrowserRouter, createHashRouter, Navigate } from 'react-router-dom';
 import { AppShell } from '../components/layout/AppShell';
 import { LoginPage } from '../pages/LoginPage';
 import { StrategicCockpitPage } from '../pages/StrategicCockpitPage';
@@ -44,7 +44,9 @@ function OverviewRedirect() {
   return <Navigate to="/cockpit" replace />;
 }
 
-export const router = createBrowserRouter([
+const createRouter = import.meta.env.MODE === 'streamlit' ? createHashRouter : createBrowserRouter;
+
+export const router = createRouter([
   { path: '/login', element: <LoginPage /> },
   { path: '/mini-program', element: <MiniProgramPage /> },
   {
