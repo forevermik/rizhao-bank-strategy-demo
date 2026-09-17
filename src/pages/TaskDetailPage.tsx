@@ -10,7 +10,7 @@ import type { Measure, Priority, Quarter, QuarterlyTaskReport, StrategicTask, Ye
 import { getTaskImplementationYears } from '../utils/taskCalculations';
 import { canViewTask, getTaskLeads, getTaskRelation } from '../utils/taskSelectors';
 import { getTaskStandards } from '../utils/progressCalculations';
-import { calculateMeasureYearProgress, calculateTaskOverallQuarterProgress, calculateTaskYearQuarterProgress, getMeasureFilledQuarters, getQuarterReport, getTaskQuarterStats, quarters } from '../utils/quarterlyProgress';
+import { calculateTaskOverallQuarterProgress, calculateTaskYearQuarterProgress, getMeasureFilledQuarters, getQuarterReport, getTaskQuarterStats, quarters } from '../utils/quarterlyProgress';
 
 type Tab = 'overview' | 'quarters';
 
@@ -95,29 +95,53 @@ function TaskOverview({ task }: { task: StrategicTask }) {
 }
 
 function QuarterlyProgressPanel({ task, year, implementationYears, setYear, canEdit, isLockedForSupport, departmentId, reports, saveReport }: { task: StrategicTask; year: Year; implementationYears: Year[]; setYear: (year: Year) => void; canEdit: boolean; isLockedForSupport: boolean; departmentId: string; reports: QuarterlyTaskReport[]; saveReport: (report: QuarterlyTaskReport) => void }) {
+  const [viewMode, setViewMode] = useState<'all' | 'single'>('all');
   const progressDepartmentId = canEdit ? departmentId : undefined;
   const stats = getTaskQuarterStats(task, year, reports, progressDepartmentId);
   const yearProgress = calculateTaskYearQuarterProgress(task, year, reports, progressDepartmentId) ?? 0;
+  const standards = getTaskStandards(task.id);
+  const displayYears = viewMode === 'all' ? implementationYears : [year];
   return <section className="soft-panel rounded-ui p-5">
-    <div className="flex flex-wrap items-start justify-between gap-4"><div><h3 className="text-xl font-black text-ink">关键举措季度进度{canEdit ? '填报' : '查看'}</h3><p className="mt-2 text-sm font-semibold text-muted">{canEdit ? '所有牵头部门统一填写填报内容（完成情况）和预计完成时间节点；任一项有内容，该季度计 25%。' : isLockedForSupport ? '协同部门为只读状态，可查看牵头部门填写的内容和预计完成时间节点。' : '战略管理部门查看各牵头部门的填报内容、预计完成时间节点及汇总进度。'}</p></div><div className="flex flex-wrap gap-2">{implementationYears.map((item) => <button key={item} onClick={() => setYear(item)} className={`h-9 rounded-xl px-4 text-sm font-bold ${year === item ? 'bg-brand-500 text-white' : 'bg-[#F6F9FE] text-muted'}`}>{item}</button>)}</div></div>
+    <div className="flex flex-wrap items-start justify-between gap-4">
+      <div><h3 className="text-xl font-black text-ink">实施举措季度进度{canEdit ? '填报' : '查看'}</h3><p className="mt-2 text-sm font-semibold text-muted">{canEdit ? '牵头部门按每项实施举措填写季度完成情况和预计完成时间节点；任一项有内容，该季度计 25%。' : isLockedForSupport ? '协同部门为只读状态，可查看牵头部门填写的内容和预计完成时间节点。' : '战略管理部门查看各牵头部门的填报内容、预计完成时间节点及汇总进度。'}</p></div>
+      <div className="flex flex-wrap items-center gap-2">
+        <div className="flex rounded-xl bg-[#F6F9FE] p-1"><button type="button" onClick={() => setViewMode('all')} className={`h-8 rounded-lg px-4 text-sm font-bold ${viewMode === 'all' ? 'bg-brand-500 text-white shadow-sm' : 'text-muted'}`}>全周期</button><button type="button" onClick={() => setViewMode('single')} className={`h-8 rounded-lg px-4 text-sm font-bold ${viewMode === 'single' ? 'bg-brand-500 text-white shadow-sm' : 'text-muted'}`}>单年度</button></div>
+        <select aria-label="选择填报年度" value={year} onChange={(event) => setYear(Number(event.target.value) as Year)} className="h-10 rounded-xl border border-[#D9E3F2] bg-white px-3 text-sm font-bold text-ink outline-none focus:border-brand-500">{implementationYears.map((item) => <option key={item} value={item}>{item}</option>)}</select>
+      </div>
+    </div>
     <div className="mt-5 rounded-ui bg-[#F8FBFF] p-4">
       <div className="flex items-center justify-between"><span className="font-black text-ink">{year} 年关键举措填报概览</span><span className="text-2xl font-black text-brand-500">{yearProgress}%</span></div>
       <div className="mt-3 grid grid-cols-3 gap-3 text-sm"><SummaryBox label="关键举措" value={`${stats.measureCount} 项`} /><SummaryBox label="已完成举措" value={`${stats.completedMeasures} 项`} /><SummaryBox label="已填报季度单元" value={`${stats.filledSlots} / ${stats.totalSlots}`} /></div>
       <div className="mt-3 grid grid-cols-4 gap-2">{stats.quarterStats.map((item) => <div key={item.quarter} className={`rounded-xl px-3 py-2 text-center text-sm font-bold ${item.filled === item.total && item.total > 0 ? 'bg-brand-500 text-white' : 'bg-white text-muted'}`}>第 {item.quarter} 季度 {item.filled}/{item.total}</div>)}</div>
     </div>
-    <div className="mt-5 space-y-4">{task.measures.map((measure, index) => {
-      const measureProgress = calculateMeasureYearProgress(task, measure.id, year, reports, progressDepartmentId) ?? 0;
-      const filledQuarters = getMeasureFilledQuarters(task, measure.id, year, reports, progressDepartmentId);
-      return <article key={measure.id} className="rounded-ui border border-[#D9E3F2] bg-white p-5">
-        <div className="flex items-start justify-between gap-4"><div className="min-w-0"><div className="text-sm font-black text-brand-500">关键举措 {index + 1}</div><p className="mt-2 whitespace-pre-wrap text-sm font-semibold leading-7 text-[#344054]">{measure.title}</p></div><div className="shrink-0 text-right"><div className="text-xs font-bold text-muted">年度完成</div><div className="mt-1 text-2xl font-black text-brand-500">{measureProgress}%</div></div></div>
-        <div className="mt-3 h-2 overflow-hidden rounded-full bg-[#E5ECF6]"><div className="h-full rounded-full bg-gradient-to-r from-brand-500 to-cyanx" style={{ width: `${measureProgress}%` }} /></div>
-        <div className="mt-4 grid grid-cols-2 gap-3">{quarters.map((quarter) => <MeasureQuarterCard key={`${measure.id}-${year}-${quarter}`} task={task} measure={measure} year={year} quarter={quarter} departmentId={departmentId} canEdit={canEdit} filled={filledQuarters.includes(quarter)} reports={reports} saveReport={saveReport} />)}</div>
-      </article>;
-    })}</div>
+    <div className="mt-5 overflow-x-auto rounded-ui border border-[#D9E3F2] bg-white">
+      <table className="border-collapse text-left text-sm" style={{ minWidth: `${820 + displayYears.length * 4 * 310}px` }}>
+        <thead className="bg-[#F4F7FC] text-[#475467]">
+          <tr><th rowSpan={2} className="w-16 border-b border-r border-[#D9E3F2] px-4 py-4 text-center">序号</th><th rowSpan={2} className="w-80 border-b border-r border-[#D9E3F2] px-4 py-4">实施举措</th><th rowSpan={2} className="w-80 border-b border-r border-[#D9E3F2] px-4 py-4">最终目标（完成标准）</th><th rowSpan={2} className="w-32 border-b border-r border-[#D9E3F2] px-4 py-4">目标时间</th>{displayYears.map((item) => <th key={item} colSpan={4} className="border-b border-r border-[#D9E3F2] px-4 py-4 text-center text-base font-black text-ink">{item} 年季度填报</th>)}</tr>
+          <tr>{displayYears.flatMap((item) => quarters.map((quarter) => <th key={`${item}-${quarter}`} className="w-[310px] border-b border-r border-[#D9E3F2] px-4 py-3 text-center">第 {quarter} 季度</th>))}</tr>
+        </thead>
+        <tbody>{task.measures.map((measure, index) => {
+          const standard = standards[index];
+          const finalTarget = standard?.finalTargetText || standard?.name || standard?.sourceText || task.completionStandards[index] || '—';
+          const targetTime = standard?.finalTargetDate || task.endDate || '—';
+          return <tr key={measure.id} className="align-top even:bg-[#FBFDFF]">
+            <td className="border-b border-r border-[#E4EBF5] px-4 py-5 text-center text-base font-black text-brand-500">{index + 1}</td>
+            <td className="border-b border-r border-[#E4EBF5] px-4 py-5"><p className="w-72 whitespace-pre-wrap font-bold leading-7 text-ink">{measure.title}</p></td>
+            <td className="border-b border-r border-[#E4EBF5] px-4 py-5"><p className="w-72 whitespace-pre-wrap font-semibold leading-7 text-[#344054]">{finalTarget}</p></td>
+            <td className="border-b border-r border-[#E4EBF5] px-4 py-5 font-semibold text-[#344054]">{targetTime}</td>
+            {displayYears.flatMap((item) => {
+              const filledQuarters = getMeasureFilledQuarters(task, measure.id, item, reports, progressDepartmentId);
+              return quarters.map((quarter) => <td key={`${measure.id}-${item}-${quarter}`} className="w-[310px] border-b border-r border-[#E4EBF5] p-3"><MeasureQuarterCell task={task} measure={measure} year={item} quarter={quarter} departmentId={departmentId} canEdit={canEdit} filled={filledQuarters.includes(quarter)} reports={reports} saveReport={saveReport} /></td>);
+            })}
+          </tr>;
+        })}</tbody>
+      </table>
+    </div>
+    <p className="mt-3 text-xs font-semibold text-muted">左右拖动表格可查看全部实施年度及季度填报内容。</p>
   </section>;
 }
 
-function MeasureQuarterCard({ task, measure, year, quarter, departmentId, canEdit, filled, reports, saveReport }: { task: StrategicTask; measure: Measure; year: Year; quarter: Quarter; departmentId: string; canEdit: boolean; filled: boolean; reports: QuarterlyTaskReport[]; saveReport: (report: QuarterlyTaskReport) => void }) {
+function MeasureQuarterCell({ task, measure, year, quarter, departmentId, canEdit, filled, reports, saveReport }: { task: StrategicTask; measure: Measure; year: Year; quarter: Quarter; departmentId: string; canEdit: boolean; filled: boolean; reports: QuarterlyTaskReport[]; saveReport: (report: QuarterlyTaskReport) => void }) {
   const report = getQuarterReport(reports, task.id, measure.id, year, quarter, departmentId);
   const [content, setContent] = useState(report?.content ?? '');
   const [expectedCompletionTime, setExpectedCompletionTime] = useState(report?.expectedCompletionTime ?? '');
@@ -129,8 +153,8 @@ function MeasureQuarterCard({ task, measure, year, quarter, departmentId, canEdi
     setSaved(true);
     window.setTimeout(() => setSaved(false), 1200);
   }
-  return <div className="rounded-xl border border-[#E4EBF5] bg-[#FBFDFF] p-4">
-    <div className="flex items-center justify-between"><div className="font-black text-ink">第 {quarter} 季度</div>{filled ? <span className="inline-flex items-center gap-1 rounded-full bg-[#ECFDF3] px-3 py-1 text-xs font-bold text-[#027A48]"><CheckCircle2 size={14} /> 已填报 · +25%</span> : <span className="rounded-full bg-[#F2F4F7] px-3 py-1 text-xs font-bold text-muted">待填报</span>}</div>
+  return <div className="w-[285px]">
+    <div className="flex items-center justify-between"><div className="font-black text-ink">{year} · Q{quarter}</div>{filled ? <span className="inline-flex items-center gap-1 rounded-full bg-[#ECFDF3] px-2 py-1 text-xs font-bold text-[#027A48]"><CheckCircle2 size={13} /> 已填报 · +25%</span> : <span className="rounded-full bg-[#F2F4F7] px-2 py-1 text-xs font-bold text-muted">待填报</span>}</div>
     {canEdit ? <>
       <label className="mt-3 block">
         <span className="text-xs font-bold text-muted">填报内容（完成情况）</span>
