@@ -3,7 +3,6 @@ import type { LucideIcon } from 'lucide-react';
 import { ChevronRight, ClipboardList, Database, Edit3, Home, LockKeyhole, LogOut, Search, Target, UserRound } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { LogoMark } from '../components/common/LogoMark';
-import { AiAssistant } from '../components/ai-assistant/AiAssistant';
 import { dashboardSeed } from '../data/dashboard';
 import { indicators } from '../data/indicators';
 import { CURRENT_DEMO_YEAR, DEMO_DATA_AS_OF_DATE } from '../data/constants';
@@ -209,7 +208,6 @@ function MiniAuthenticatedApp({ logout }: { logout: () => void }) {
 
         <MiniBottomNav tab={tab} setTab={setTab} isStrategy={isStrategy} />
         <MiniSheet sheet={sheet} setSheet={setSheet} leadDepartments={leadDepartments} />
-        <AiAssistant variant="mobile" />
       </div>
     </MiniFrame>
   );

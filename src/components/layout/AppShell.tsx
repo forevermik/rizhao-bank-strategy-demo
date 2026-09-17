@@ -11,7 +11,6 @@ import {
 import { useState } from 'react';
 import { useAuth } from '../../hooks/useAuth';
 import { LogoMark } from '../common/LogoMark';
-import { AiAssistant } from '../ai-assistant/AiAssistant';
 
 const navItems = [
   { to: '/cockpit', label: '战略驾驶舱', icon: Gauge },
@@ -116,7 +115,6 @@ export function AppShell() {
           <div className="mt-8 rounded-xl bg-[#F8FBFF] px-4 py-3 text-center text-xs font-semibold text-muted">
             页面进度为静态Demo演示数据，不代表实际经营完成情况。
           </div>
-          <AiAssistant variant="desktop" />
         </div>
       </main>
     </div>
