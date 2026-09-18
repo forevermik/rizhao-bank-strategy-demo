@@ -1,4 +1,4 @@
-import { createBrowserRouter, createHashRouter, Navigate } from 'react-router-dom';
+import { createBrowserRouter, createMemoryRouter, Navigate } from 'react-router-dom';
 import { AppShell } from '../components/layout/AppShell';
 import { LoginPage } from '../pages/LoginPage';
 import { StrategicCockpitPage } from '../pages/StrategicCockpitPage';
@@ -44,7 +44,7 @@ function OverviewRedirect() {
   return <Navigate to="/cockpit" replace />;
 }
 
-const createRouter = import.meta.env.MODE === 'streamlit' ? createHashRouter : createBrowserRouter;
+const createRouter = import.meta.env.MODE === 'streamlit' ? createMemoryRouter : createBrowserRouter;
 
 export const router = createRouter([
   { path: '/login', element: <LoginPage /> },

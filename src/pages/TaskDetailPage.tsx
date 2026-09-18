@@ -99,8 +99,9 @@ function QuarterlyProgressPanel({ task, year, implementationYears, setYear, canE
   const progressDepartmentId = canEdit ? departmentId : undefined;
   const stats = getTaskQuarterStats(task, year, reports, progressDepartmentId);
   const yearProgress = calculateTaskYearQuarterProgress(task, year, reports, progressDepartmentId) ?? 0;
-  const standards = getTaskStandards(task.id);
   const displayYears = viewMode === 'all' ? implementationYears : [year];
+  const mergedStandards = getMergedCompletionStandards(task);
+  const targetDates = getMergedTargetDates(task);
   return <section className="soft-panel rounded-ui p-5">
     <div className="flex flex-wrap items-start justify-between gap-4">
       <div><h3 className="text-xl font-black text-ink">实施举措季度进度{canEdit ? '填报' : '查看'}</h3><p className="mt-2 text-sm font-semibold text-muted">{canEdit ? '牵头部门按每项实施举措填写季度完成情况和预计完成时间节点；任一项有内容，该季度计 25%。' : isLockedForSupport ? '协同部门为只读状态，可查看牵头部门填写的内容和预计完成时间节点。' : '战略管理部门查看各牵头部门的填报内容、预计完成时间节点及汇总进度。'}</p></div>
@@ -121,14 +122,18 @@ function QuarterlyProgressPanel({ task, year, implementationYears, setYear, canE
           <tr>{displayYears.flatMap((item) => quarters.map((quarter) => <th key={`${item}-${quarter}`} className="w-[310px] border-b border-r border-[#D9E3F2] px-4 py-3 text-center">第 {quarter} 季度</th>))}</tr>
         </thead>
         <tbody>{task.measures.map((measure, index) => {
-          const standard = standards[index];
-          const finalTarget = standard?.finalTargetText || standard?.name || standard?.sourceText || task.completionStandards[index] || '—';
-          const targetTime = standard?.finalTargetDate || task.endDate || '—';
           return <tr key={measure.id} className="align-top even:bg-[#FBFDFF]">
             <td className="border-b border-r border-[#E4EBF5] px-4 py-5 text-center text-base font-black text-brand-500">{index + 1}</td>
             <td className="border-b border-r border-[#E4EBF5] px-4 py-5"><p className="w-72 whitespace-pre-wrap font-bold leading-7 text-ink">{measure.title}</p></td>
-            <td className="border-b border-r border-[#E4EBF5] px-4 py-5"><p className="w-72 whitespace-pre-wrap font-semibold leading-7 text-[#344054]">{finalTarget}</p></td>
-            <td className="border-b border-r border-[#E4EBF5] px-4 py-5 font-semibold text-[#344054]">{targetTime}</td>
+            {index === 0 && <td rowSpan={task.measures.length} className="border-b border-r border-[#E4EBF5] px-4 py-5 align-top">
+              <div className="w-80 rounded-xl border border-[#D9E3F2] bg-[#F8FBFF] p-4">
+                <div className="mb-3 text-xs font-black text-brand-500">本任务全部完成标准 · {mergedStandards.length} 项</div>
+                <div className="space-y-3">{mergedStandards.map((standard, standardIndex) => <div key={`${task.id}-merged-standard-${standardIndex}`} className="whitespace-pre-wrap text-sm font-semibold leading-7 text-[#344054]">{standard}</div>)}</div>
+              </div>
+            </td>}
+            {index === 0 && <td rowSpan={task.measures.length} className="border-b border-r border-[#E4EBF5] px-4 py-5 align-top">
+              <div className="w-28 space-y-2 font-semibold text-[#344054]">{targetDates.map((date) => <div key={date} className="rounded-lg bg-[#F8FBFF] px-2 py-2">{date}</div>)}</div>
+            </td>}
             {displayYears.flatMap((item) => {
               const filledQuarters = getMeasureFilledQuarters(task, measure.id, item, reports, progressDepartmentId);
               return quarters.map((quarter) => <td key={`${measure.id}-${item}-${quarter}`} className="w-[310px] border-b border-r border-[#E4EBF5] p-3"><MeasureQuarterCell task={task} measure={measure} year={item} quarter={quarter} departmentId={departmentId} canEdit={canEdit} filled={filledQuarters.includes(quarter)} reports={reports} saveReport={saveReport} /></td>);
@@ -139,6 +144,30 @@ function QuarterlyProgressPanel({ task, year, implementationYears, setYear, canE
     </div>
     <p className="mt-3 text-xs font-semibold text-muted">左右拖动表格可查看全部实施年度及季度填报内容。</p>
   </section>;
+}
+
+function getMergedCompletionStandards(task: StrategicTask) {
+  const generatedStandards = getTaskStandards(task.id)
+    .map((standard) => standard.finalTargetText || standard.name || standard.sourceText)
+    .filter(Boolean);
+  const merged = [...generatedStandards];
+  const seen = new Set(merged.map(normalizeText));
+  task.completionStandards.forEach((standard) => {
+    const key = normalizeText(standard);
+    if (key && !seen.has(key)) {
+      merged.push(standard);
+      seen.add(key);
+    }
+  });
+  return merged.length ? merged : ['暂无完成标准'];
+}
+
+function getMergedTargetDates(task: StrategicTask) {
+  const dates = getTaskStandards(task.id)
+    .map((standard) => standard.finalTargetDate)
+    .filter((date): date is string => Boolean(date));
+  const uniqueDates = [...new Set(dates)];
+  return uniqueDates.length ? uniqueDates : [task.endDate || '—'];
 }
 
 function MeasureQuarterCell({ task, measure, year, quarter, departmentId, canEdit, filled, reports, saveReport }: { task: StrategicTask; measure: Measure; year: Year; quarter: Quarter; departmentId: string; canEdit: boolean; filled: boolean; reports: QuarterlyTaskReport[]; saveReport: (report: QuarterlyTaskReport) => void }) {
