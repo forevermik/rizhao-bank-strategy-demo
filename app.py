@@ -33,13 +33,9 @@ if not index_file.exists():
 
 index_html = index_file.read_text(encoding='utf-8')
 
-# The component runs in a srcdoc iframe. Point its production assets at the
-# Streamlit app's internal static-file route instead of sending the whole
-# JavaScript bundle through the component WebSocket on every page load.
-public_asset_base = (
-    'https://rizhao-bank-strategy-demo.streamlit.app/~/+/app/static/assets/'
-)
-index_html = index_html.replace('/app/static/assets/', public_asset_base)
+# The component runs in a srcdoc iframe. The Streamlit build already points
+# production assets at the app's public static route; load the bundle as a
+# classic script so the opaque iframe origin does not require module CORS.
 index_html = index_html.replace('<script type="module" crossorigin', '<script defer')
 
 # Streamlit serves project CSS as text/plain, which browsers reject as a
