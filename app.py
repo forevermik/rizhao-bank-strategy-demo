@@ -39,5 +39,7 @@ public_asset_base = (
     'https://rizhao-bank-strategy-demo.streamlit.app/~/+/app/static/assets/'
 )
 index_html = index_html.replace('/app/static/assets/', public_asset_base)
+index_html = index_html.replace('<script type="module" crossorigin', '<script defer')
+index_html = index_html.replace('<link rel="stylesheet" crossorigin', '<link rel="stylesheet"')
 
 components.html(index_html, height=1200, scrolling=True)
