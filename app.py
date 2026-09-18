@@ -1,3 +1,4 @@
+import base64
 from pathlib import Path
 
 import streamlit as st
@@ -23,9 +24,40 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
-index_file = Path(__file__).parent / 'static' / 'index.html'
+static_dir = Path(__file__).parent / 'static'
+index_file = static_dir / 'index.html'
+assets_dir = static_dir / 'assets'
+
 if not index_file.exists():
     st.error('前端资源尚未生成，请先运行 npm run build:streamlit。')
     st.stop()
 
-components.html(index_file.read_text(encoding='utf-8'), height=1200, scrolling=True)
+index_html = index_file.read_text(encoding='utf-8')
+
+# Streamlit Community Cloud serves an app through an outer proxy. Absolute
+# /app/static references inside a component iframe resolve against that proxy.
+# Inline the production bundle so the app works at its public Streamlit URL.
+css_file = next(assets_dir.glob('index-*.css'))
+js_file = next(assets_dir.glob('index-*.js'))
+css = css_file.read_text(encoding='utf-8')
+js = js_file.read_text(encoding='utf-8')
+
+for image_file in assets_dir.glob('*.png'):
+    encoded = base64.b64encode(image_file.read_bytes()).decode('ascii')
+    data_url = f'data:image/png;base64,{encoded}'
+    public_path = f'/app/static/assets/{image_file.name}'
+    index_html = index_html.replace(public_path, data_url)
+    css = css.replace(public_path, data_url)
+    js = js.replace(public_path, data_url)
+
+safe_js = js.replace('</script>', '<\/script>')
+index_html = index_html.replace(
+    f'<script type="module" crossorigin src="/app/static/assets/{js_file.name}"></script>',
+    f'<script type="module">{safe_js}</script>',
+)
+index_html = index_html.replace(
+    f'<link rel="stylesheet" crossorigin href="/app/static/assets/{css_file.name}">',
+    f'<style>{css}</style>',
+)
+
+components.html(index_html, height=1200, scrolling=True)
