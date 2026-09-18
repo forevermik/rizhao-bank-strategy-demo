@@ -1,4 +1,5 @@
 from pathlib import Path
+import re
 
 import streamlit as st
 import streamlit.components.v1 as components
@@ -40,6 +41,15 @@ public_asset_base = (
 )
 index_html = index_html.replace('/app/static/assets/', public_asset_base)
 index_html = index_html.replace('<script type="module" crossorigin', '<script defer')
-index_html = index_html.replace('<link rel="stylesheet" crossorigin', '<link rel="stylesheet"')
+
+# Streamlit serves project CSS as text/plain, which browsers reject as a
+# stylesheet. Inline the generated CSS while keeping the larger JS bundle on
+# the public static route.
+stylesheet_match = re.search(r'<link rel="stylesheet" crossorigin href="[^"]*/([^/"]+\.css)">', index_html)
+if stylesheet_match:
+    stylesheet_file = static_dir / 'assets' / stylesheet_match.group(1)
+    if stylesheet_file.exists():
+        stylesheet = stylesheet_file.read_text(encoding='utf-8')
+        index_html = index_html.replace(stylesheet_match.group(0), f'<style>{stylesheet}</style>')
 
 components.html(index_html, height=1200, scrolling=True)
