@@ -42,6 +42,14 @@ js_file = next(assets_dir.glob('index-*.js'))
 css = css_file.read_text(encoding='utf-8')
 js = js_file.read_text(encoding='utf-8')
 
+# React Router falls back to window.location.href when a document has a null
+# origin. A Streamlit component runs at about:srcdoc, which is not a valid base
+# URL for new URL. Give the history adapter a stable public base.
+js = js.replace(
+    'a.location.origin!=="null"?a.location.origin:a.location.href',
+    'a.location.origin!=="null"?a.location.origin:"https://rizhao-bank-strategy-demo.streamlit.app/"',
+)
+
 for image_file in assets_dir.glob('*.png'):
     encoded = base64.b64encode(image_file.read_bytes()).decode('ascii')
     data_url = f'data:image/png;base64,{encoded}'
